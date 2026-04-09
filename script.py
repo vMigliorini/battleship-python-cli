@@ -149,14 +149,14 @@ def introducaoJogo():
     print("🛳🌊 BEM-VINDO AO JOGO BATALHA NAVAL 🌊🛳")
     print("=" * 50)
     print()
-    time.sleep(1)
+    #time.sleep(1)
     print(
         f"\t{color['red']}ATENÇÃO{color['reset']}\n\tA letra {color['green']}[N]{color['reset']} representa as partes do navio que não foram atingidas \n\tA letra {color['red']}[X]{color['reset']} representa acertos nos navios\n\tA letra {color['yellow']}[O]{color['reset']} representa acertos na água")
     print()
-    time.sleep(4)
+    #time.sleep(4)
     print(f"\tIniciando a configuração dos navios:")
     print()
-    time.sleep(1)
+    #time.sleep(1)
     print(color['green'], "Navios", color['reset'], ":\n\t1 porta-aviões ", color['yellow'], "(5 espaços)",
           color['reset'], "\n\t1 Encouraçado ", color['yellow'], " (4 espaços)", color['reset'], "\n\t2 Cruzador ",
           color['yellow'], "    (3 espaços)", color['reset'], "\n\t2 Submarino ", color['yellow'], "  (2 espaços)",
@@ -204,10 +204,10 @@ def introducaoBatalha():
     print("\n" + "=" * 60)
     print("🚢  TODOS OS NAVIOS FORAM POSICIONADOS  🚢")
     print("=" * 60)
-    time.sleep(1.5)  # print para o início de jogo
+    #time.sleep(1.5)  # print para o início de jogo
     print("🌊💣💥    QUE COMECE A BATALHA!    💥💣🌊")
     print("=" * 60)
-    time.sleep(1.5)
+    #time.sleep(1.5)
     print("""
                     ===========
                      ))_))))_)
@@ -283,10 +283,9 @@ def jogada(tabuleiro, tabuleiroAtaque, tabuleiroAtacado, jogadorAtacado, jogador
             placar[jogadorPlacar]["acertos"] += 1
     else:
         print(f"{color['red']}Voce atirou duas vezes no mesmo lugar,{color['reset']}Cuidado!")
-        time.sleep(2)
+        #time.sleep(2)
 
-    naviosInimigos = ["Porta-aviões", "Encouraçado", "CruzadorUm", "CruzadorDois", "SubmarinoUm",
-                      "SubmarinoDois"]  # pega o nome dos navios
+    naviosInimigos = ["Porta-aviões", "Encouraçado", "CruzadorUm", "CruzadorDois", "SubmarinoUm", "SubmarinoDois"]  # pega o nome dos navios
     naviosAfundadosContador = 0  # inicializa um contador de navios afundados
     if modoJogo == "1":  # jogador x jogador:
         for nomeDoNavio in naviosInimigos:  # chama verificarNavioAbatido e se retornar True aumenta o contador
@@ -305,12 +304,11 @@ def jogada(tabuleiro, tabuleiroAtaque, tabuleiroAtacado, jogadorAtacado, jogador
     print(f"           Tabuleiro de ataque do comandante {jogador}")
     printaMatriz(tabuleiroAtaque)
     print(f"\tEssa foi sua jogada, {jogador}. Passe a vez para o outro jogador!")
-    time.sleep(5)
+    #time.sleep(5)
     os.system('cls' if os.name == 'nt' else 'clear')
 
-    if not any("N" in linha for linha in
-               tabuleiroAtacado):  # verifica se ainda tem navio nas linhas, se não declara o fim do jogo e retorna True para a variavel fim que chama a jogada
-        time.sleep(2)
+    if not any("N" in linha for linha in tabuleiroAtacado):  # verifica se ainda tem navio nas linhas, se não declara o fim do jogo e retorna True para a variavel fim que chama a jogada
+        #time.sleep(2)
         os.system('cls' if os.name == 'nt' else 'clear')
         print(f"Voce acabou com o {jogadorAtacado}!")
         print(f"Vitoria de {jogador}!!!")
@@ -498,7 +496,7 @@ def jogadaIAComEspera(tabuleiroAtaque, tabuleiroAtacado, coordenadasAtacadas, pr
             naviosAfundadosContador += 1
     placarIA["IA"]["navios_abatidos"] = naviosAfundadosContador
 
-    time.sleep(1.5)
+    #time.sleep(1.5)
     pararEvento.set()
     threadLoading.join()
 
@@ -506,12 +504,11 @@ def jogadaIAComEspera(tabuleiroAtaque, tabuleiroAtacado, coordenadasAtacadas, pr
     print(f"           seu tabuleiro após o ataque")
     printaMatriz(tabuleiroAtacado)
     print(f"A IA fez sua jogada!")
-    time.sleep(1)
+    #time.sleep(1)
     os.system('cls' if os.name == 'nt' else 'clear')
 
-    if not any(
-            "N" in linha for linha in tabuleiroAtacado):  # se não houver mais navios nas linhas decreta o fim do jogo
-        time.sleep(2)
+    if not any("N" in linha for linha in tabuleiroAtacado):  # se não houver mais navios nas linhas decreta o fim do jogo
+        #time.sleep(2)
         os.system('cls' if os.name == 'nt' else 'clear')
         print(f"A IA acabou com você!")
         print(f"Vitoria da IA!!!")
@@ -526,17 +523,17 @@ def telaJogadorContraIA(pararEvento, frase):
         for i in pontos:
             os.system('cls' if os.name == 'nt' else 'clear')
             print(f"{frase}{i}")  # input da frase, no caso do insereNaviosIa é: "esperando a IA colocar seus navios"
-            time.sleep(0.25)
+            #time.sleep(0.25)
 
 def print_prosicionamento_navios(tabuleiro, jogador):
     print()
     printaMatriz(tabuleiro)
     print()
     print(f"\t Seu posicionamento final! 👆👆")
-    time.sleep(2)
+    #time.sleep(2)
     os.system('cls' if os.name == 'nt' else 'clear')
     print(f"Configurações dos navios de {jogador} foram salvas!")
-    time.sleep(2)
+    #time.sleep(2)
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
@@ -665,7 +662,7 @@ while continuar != "X":  # Esse while coloca a condicao de o jogador continuar (
 
     if usernameDois == "IA":
         for i in range(len(statusCoordenadasNaviosDois)):
-            insereNaviosIA(tabuleiro, navios_name_size[i][1] , proporcao, linha, coluna, navios_name_size[i][1], statusCoordenadasNaviosDois)
+            insereNaviosIA(tabuleiroDois, navios_name_size[i][1] , proporcao, linha, coluna, navios_name_size[i][1], statusCoordenadasNaviosDois)
     else:
         introducaoJogo()  # em outro caso, chama a função chamaInsereNavios
         for i in range(len(statusCoordenadasNaviosDois)):
@@ -677,8 +674,7 @@ while continuar != "X":  # Esse while coloca a condicao de o jogador continuar (
 
     while fim is False:  # Esse laco continua até que alguém ganhe, ele que mantém o jogo acontecendo
         if usernameDois == "IA":  # verifica se voce esta contra IA
-            fim = jogada(tabuleiroUm, tabuleiroAtaqueUm, tabuleiroDois, jogadorDois, jogadorUm,
-                         statusCoordenadasNaviosDois)  # Essa condicao é muito importante, para fazer o jogo parar
+            fim = jogada(tabuleiroUm, tabuleiroAtaqueUm, tabuleiroDois, jogadorDois, jogadorUm, statusCoordenadasNaviosDois)  # Essa condicao é muito importante, para fazer o jogo parar
             if fim is False:  # entao dependendo do que a def jogada retornar o jogo acaba, no caso se retornar True o jogo acaba
                 fim = jogadaIAComEspera(tabuleiroAtaqueDois, tabuleiroUm, coordenadasAtacadas, proporcao,
                                         statusCoordenadasNaviosUm, jogadorDois, tabuleiroDois)
