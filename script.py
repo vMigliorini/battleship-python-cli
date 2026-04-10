@@ -10,8 +10,7 @@ from colorama import Fore, init
 
 
 def verificarNavioAbatido(statusCoordenadasNavios, tabuleiroAtacado):
-    for nome in ["Porta-aviões", "Encouraçado", "CruzadorUm", "CruzadorDois", "SubmarinoUm", "SubmarinoDois"]:
-        coords = statusCoordenadasNavios.get(nome, [])
+    for coords in statusCoordenadasNavios.values():
         if coords and all(tabuleiroAtacado[c[0]][c[1]] == "X" for c in coords):
             return True
     return False
@@ -51,7 +50,7 @@ def printaMatriz(tabuleiro):
 
 def insereNavios(jogador, tabuleiro, tamanhoNavio, nomeNavio, proporcao, linha, coluna, statusCoordenadasNavios):
     colocouNavios = False
-    while colocouNavios is False:
+    while not colocouNavios:
         try:
             print(f"           Tabuleiro do {jogador}")
             printaMatriz(tabuleiro)
@@ -138,7 +137,7 @@ def introducaoJogo():
 
 def insereNaviosIA(tabuleiro, tamanhoNavio, proporcao, linha, coluna, nomeNavio, statusCoordenadasNavios):
     colocouNavios = False
-    while colocouNavios is False:
+    while not colocouNavios:
         linha = random.randint(1, proporcao)
         coluna = random.randint(1, proporcao)
         direcao = random.choice(["V", "H"])
@@ -602,15 +601,15 @@ while continuar != "X":
 
     introducaoBatalha()
 
-    while fim is False:
+    while not fim:
         if usernameDois == "IA":
             fim = jogada(tabuleiroUm, tabuleiroAtaqueUm, tabuleiroDois, jogadorDois, jogadorUm, statusCoordenadasNaviosDois)
-            if fim is False:
+            if not fim:
                 fim = jogadaIAComEspera(tabuleiroAtaqueDois, tabuleiroUm, coordenadasAtacadas, proporcao,
                                         statusCoordenadasNaviosUm, jogadorDois, tabuleiroDois)
         else:
             fim = jogada(tabuleiroUm, tabuleiroAtaqueUm, tabuleiroDois, jogadorDois, jogadorUm, statusCoordenadasNaviosDois)
-            if fim is False:
+            if not fim:
                 fim = jogada(tabuleiroDois, tabuleiroAtaqueDois, tabuleiroUm, jogadorUm, jogadorDois, statusCoordenadasNaviosUm)
 
     print("-" * 20, "Placar final", "-" * 20)
