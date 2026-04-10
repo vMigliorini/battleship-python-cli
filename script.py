@@ -9,18 +9,8 @@ from turtledemo.chaos import jumpto
 from colorama import Fore, init
 
 
-def verificarNavioAbatido(statusCoordenadasNavios, tabuleiro, nomeNavio):
-    if not statusCoordenadasNavios.get(nomeNavio):  # verifica se o navio que eu procuro existe no dicionário
-        return False
-    if all(tabuleiro[coord[0]][coord[1]] == "X" for coord in
-           statusCoordenadasNavios[nomeNavio]):  # verifica se todas as coordenadas salvas do navio estão abatidas
-        return True  # se sim, retorna True
-    return False
-
-
-def chama_verificacao_navios_abatidos(statusCoordenadasNavios, tabuleiroAtacado):
-    navios = ["Porta-aviões", "Encouraçado", "CruzadorUm", "CruzadorDois", "SubmarinoUm", "SubmarinoDois"]
-    for nome in navios:
+def verificarNavioAbatido(statusCoordenadasNavios, tabuleiroAtacado):
+    for nome in ["Porta-aviões", "Encouraçado", "CruzadorUm", "CruzadorDois", "SubmarinoUm", "SubmarinoDois"]:
         coords = statusCoordenadasNavios.get(nome, [])
         if coords and all(tabuleiroAtacado[c[0]][c[1]] == "X" for c in coords):
             return True
@@ -28,17 +18,14 @@ def chama_verificacao_navios_abatidos(statusCoordenadasNavios, tabuleiroAtacado)
 
 
 def criaMesa(n1):
-    tabuleiro = [[" " for _ in range(n1 + 1)] for _ in range(
-        n1 + 1)]  # (n + 1) porque tem uma linha e uma coluna usada para colocar as coordenadas do tabuleiro
+    tabuleiro = [[" " for _ in range(n1 + 1)] for _ in range(n1 + 1)]
     for i in range(1, n1 + 1):
-        tabuleiro[0][i] = letras[i]  # coloca itens da lista letra [A, B, B...Z, AA...] na linha 0
+        tabuleiro[0][i] = letras[i]
     for i in range(1, n1 + 1):
-        tabuleiro[i][0] = str(i)  # coloca números na coluna 0
-
+        tabuleiro[i][0] = str(i)
     for i in range(1, n1 + 1):
         for j in range(1, n1 + 1):
-            tabuleiro[i][j] = "~"  # substitui os lugares que não tem coordenada e estão vazios por "~" agua
-
+            tabuleiro[i][j] = "~"
     return tabuleiro
 
 
@@ -48,8 +35,7 @@ def printaMatriz(tabuleiro):
         for j in range(len(tabuleiro[i])):
             if i != 0 and j != 0:
                 if tabuleiro[i][j] == "~":
-                    print(f"{color['blue']}{tabuleiro[i][j]:3}{color['reset']}",
-                          end=" ")  # colocando as cores no printaMatriz
+                    print(f"{color['blue']}{tabuleiro[i][j]:3}{color['reset']}", end=" ")
                 elif tabuleiro[i][j] == "X":
                     print(f"{color['red']}{tabuleiro[i][j]:3}{color['reset']}", end=" ")
                 elif tabuleiro[i][j] == "O":
@@ -70,65 +56,56 @@ def insereNavios(jogador, tabuleiro, tamanhoNavio, nomeNavio, proporcao, linha, 
             print(f"           Tabuleiro do {jogador}")
             printaMatriz(tabuleiro)
             print()
-            print("As coordenadas que você colocar serão a", color['yellow'], "ponta esquerda", color['reset'],
-                  "do navio. O resto dele será", color['yellow'], "colocado abaixo ou à direita", color['reset'],
-                  "dessa coordenada.")
+            print(f"As coordenadas que você colocar serão a {color['yellow']}ponta esquerda{color['reset']} do navio. O resto dele será {color['yellow']}colocado abaixo ou à direita{color['reset']} dessa coordenada.")
             coordenadaNavio = ""
             match = None
 
             while match is None:
-                coordenadaNavio = input(
-                    f"insira a coordenada {color['yellow']}(numero)(letra){color['reset']} do {nomeNavio}: ").upper().replace(
-                    " ", "")
-                match = re.match(r"(\d+)([A-Z]+)",
-                                 coordenadaNavio)  # retorna True se o coordenadaNavio seguir o padrão (numero)(navio) usando o "+" para aceitar mais de um "item" por grupo
+                coordenadaNavio = input(f"insira a coordenada {color['yellow']}(numero)(letra){color['reset']} do {nomeNavio}: ").upper().replace(" ", "")
+                match = re.match(r"(\d+)([A-Z]+)", coordenadaNavio)
 
-                if match is None:  # se não combinar e o match se manter None, volta o coordenadaNavio
-                    print(color['red'], "Coordenada inválida,", color['reset'], "Tente novamente!")
+                if match is None:
+                    print(f"{color['red']}Coordenada inválida,{color['reset']} Tente novamente!")
                     continue
-                tempLinha = int(match.group(
-                    1))  # armazena linha e coluna temporário para poder fazer verificações de erro antes de definir a linha e a coluna
+                tempLinha = int(match.group(1))
                 tempColuna = letras.index(match.group(2))
-                if tempLinha > proporcao or tempColuna > proporcao:  # verifica se está dentro do tabuleiro
-                    print(color['red'], "Coordenadas fora do alcance do tabuleiro", color['reset'],
-                          ", tente novamente!")
-                    match = None  # se não o match None serve como uma espécie de return se sair da função para executar o while de novo desde o início
+                if tempLinha > proporcao or tempColuna > proporcao:
+                    print(f"{color['red']}Coordenadas fora do alcance do tabuleiro{color['reset']}, tente novamente!")
+                    match = None
                 else:
-                    linha = int(match.group(1))  # se passar todos os teste é confirmada a linha e a coluna
+                    linha = int(match.group(1))
                     coluna = letras.index(match.group(2))
 
             direcao = ""
-            while direcao not in ["H", "V"]:  # verifica se a direção está no esperado
-                direcao = input(
-                    f"Insira{color['yellow']} V{color['reset']} para colocar o navio na vertical e {color['yellow']}H{color['reset']} para colocar na horizontal: ").upper().strip()
+            while direcao not in ["H", "V"]:
+                direcao = input(f"Insira{color['yellow']} V{color['reset']} para colocar o navio na vertical e {color['yellow']}H{color['reset']} para colocar na horizontal: ").upper().strip()
 
-                if direcao not in ["H", "V"]:  # se não estiver imprime para avisar
-                    print(color['red'], "Direção inválida,", color['reset'], "Tente novamente!")
+                if direcao not in ["H", "V"]:
+                    print(f"{color['red']}Direção inválida,{color['reset']} Tente novamente!")
 
             if direcao == "H":
-                if coluna + tamanhoNavio - 1 > proporcao:  # verifica se o resto do navio cabe na linha ou coluna proposta
-                    print(color['red'], "O navio não cabe na horizontal,", color['reset'], "Tente novamente!")
+                if coluna + tamanhoNavio - 1 > proporcao:
+                    print(f"{color['red']}O navio não cabe na horizontal,{color['reset']} Tente novamente!")
                     continue
 
-                if any(tabuleiro[linha][coluna + i] != "~" for i in
-                       range(tamanhoNavio)):  # verifica se a posição que o navio quer ocupar realmente está vazia
-                    print(color['red'], "Posição já ocupada,", color['reset'], "Tente novamente!")
+                if any(tabuleiro[linha][coluna + i] != "~" for i in range(tamanhoNavio)):
+                    print(f"{color['red']}Posição já ocupada,{color['reset']} Tente novamente!")
                     continue
 
-                coords = []  # declara fora do for para guardar as coordenadas do navio (util para a verificação de navio abatido)
+                coords = []
                 for i in range(tamanhoNavio):
-                    tabuleiro[linha][coluna + i] = "N"  # posiciona o navio
-                    coords.append((linha, coluna + i))  # salva as coordenadas do navio
-                statusCoordenadasNavios[nomeNavio] = coords  # adiciona as coordenadas no dicionário de listas
-                colocouNavios = True  # sai do while
+                    tabuleiro[linha][coluna + i] = "N"
+                    coords.append((linha, coluna + i))
+                statusCoordenadasNavios[nomeNavio] = coords
+                colocouNavios = True
 
             elif direcao == "V":
-                if linha + tamanhoNavio - 1 > proporcao:  # mesma coisa só que com as coordenadas na vertical
-                    print(color['red'], "Navio não cabe na vertical,", color['reset'], "Tente novamente!")
+                if linha + tamanhoNavio - 1 > proporcao:
+                    print(f"{color['red']}Navio não cabe na vertical,{color['reset']} Tente novamente!")
                     continue
 
                 if any(tabuleiro[linha + i][coluna] != "~" for i in range(tamanhoNavio)):
-                    print(color['red'], "Posição já ocupada,", color['reset'], "Tente novamente!")
+                    print(f"{color['red']}Posição já ocupada,{color['reset']} Tente novamente!")
                     continue
 
                 coords = []
@@ -138,9 +115,8 @@ def insereNavios(jogador, tabuleiro, tamanhoNavio, nomeNavio, proporcao, linha, 
                 statusCoordenadasNavios[nomeNavio] = coords
                 colocouNavios = True
 
-        except (ValueError,
-                IndexError):  # se tiver um erro de valor ou index print para avisar e continue para executar o loop de novo
-            print(color['red'], "Coordenada inválida,", color['reset'], " Tente novamente.")
+        except (ValueError, IndexError):
+            print(f"{color['red']}Coordenada inválida,{color['reset']} Tente novamente.")
             continue
 
 
@@ -150,43 +126,38 @@ def introducaoJogo():
     print("=" * 50)
     print()
     #time.sleep(1)
-    print(
-        f"\t{color['red']}ATENÇÃO{color['reset']}\n\tA letra {color['green']}[N]{color['reset']} representa as partes do navio que não foram atingidas \n\tA letra {color['red']}[X]{color['reset']} representa acertos nos navios\n\tA letra {color['yellow']}[O]{color['reset']} representa acertos na água")
+    print(f"\t{color['red']}ATENÇÃO{color['reset']}\n\tA letra {color['green']}[N]{color['reset']} representa as partes do navio que não foram atingidas \n\tA letra {color['red']}[X]{color['reset']} representa acertos nos navios\n\tA letra {color['yellow']}[O]{color['reset']} representa acertos na água")
     print()
     #time.sleep(4)
     print(f"\tIniciando a configuração dos navios:")
     print()
     #time.sleep(1)
-    print(color['green'], "Navios", color['reset'], ":\n\t1 porta-aviões ", color['yellow'], "(5 espaços)",
-          color['reset'], "\n\t1 Encouraçado ", color['yellow'], " (4 espaços)", color['reset'], "\n\t2 Cruzador ",
-          color['yellow'], "    (3 espaços)", color['reset'], "\n\t2 Submarino ", color['yellow'], "  (2 espaços)",
-          color['reset'], "")
+    print(f"{color['green']}Navios{color['reset']}:\n\t1 porta-aviões {color['yellow']}(5 espaços){color['reset']}\n\t1 Encouraçado {color['yellow']} (4 espaços){color['reset']}\n\t2 Cruzador {color['yellow']}    (3 espaços){color['reset']}\n\t2 Submarino {color['yellow']}  (2 espaços){color['reset']}")
     print()
-
 
 
 def insereNaviosIA(tabuleiro, tamanhoNavio, proporcao, linha, coluna, nomeNavio, statusCoordenadasNavios):
     colocouNavios = False
-    while colocouNavios is False:  # essa função basicamente cria linhas e colunas em posições random até alguma encaixar
-        linha = random.randint(1, proporcao)  # gera uma linha e uma coluna aleatória
+    while colocouNavios is False:
+        linha = random.randint(1, proporcao)
         coluna = random.randint(1, proporcao)
-        direcao = random.choice(["V", "H"])  # escolhe V ou H
+        direcao = random.choice(["V", "H"])
         if direcao == "H":
-            coords = []  # para armazenar as coordenadas do navio
-            if coluna + tamanhoNavio - 1 > proporcao:  # se o navio não couber, repete
+            coords = []
+            if coluna + tamanhoNavio - 1 > proporcao:
                 continue
 
-            if any(tabuleiro[linha][coluna + i] != "~" for i in range(tamanhoNavio)):  # se já estiver ocupado, repete
+            if any(tabuleiro[linha][coluna + i] != "~" for i in range(tamanhoNavio)):
                 continue
 
             for i in range(tamanhoNavio):
                 tabuleiro[linha][coluna + i] = "N"
-                coords.append((linha, coluna + i))  # armazena as coordenadas na lista
-            statusCoordenadasNavios[nomeNavio] = coords  # armazena a lista no dicionário
-            colocouNavios = True  # sai do loop
+                coords.append((linha, coluna + i))
+            statusCoordenadasNavios[nomeNavio] = coords
+            colocouNavios = True
 
         elif direcao == "V":
-            coords = []  # mesma coisa
+            coords = []
             if linha + tamanhoNavio - 1 > proporcao:
                 continue
 
@@ -204,7 +175,7 @@ def introducaoBatalha():
     print("\n" + "=" * 60)
     print("🚢  TODOS OS NAVIOS FORAM POSICIONADOS  🚢")
     print("=" * 60)
-    #time.sleep(1.5)  # print para o início de jogo
+    #time.sleep(1.5)
     print("🌊💣💥    QUE COMECE A BATALHA!    💥💣🌊")
     print("=" * 60)
     #time.sleep(1.5)
@@ -228,8 +199,7 @@ def jogada(tabuleiro, tabuleiroAtaque, tabuleiroAtacado, jogadorAtacado, jogador
     print(f"           Tabuleiro de ataque")
     printaMatriz(tabuleiroAtaque)
     print()
-    print(
-        f"\t{color['red']}ATENÇÃO{color['reset']}\n\tA letra {color['green']}N{color['reset']} representa as partes do navio que não foram atingidas \n\tA letra {color['red']}X{color['reset']} representa acertos nos navios\n\tA letra {color['yellow']}O{color['reset']} representa acertos na água")
+    print(f"\t{color['red']}ATENÇÃO{color['reset']}\n\tA letra {color['green']}N{color['reset']} representa as partes do navio que não foram atingidas \n\tA letra {color['red']}X{color['reset']} representa acertos nos navios\n\tA letra {color['yellow']}O{color['reset']} representa acertos na água")
     jogadorPlacar = ""
     if modoJogo == "1":
         if tabuleiro == tabuleiroUm:
@@ -238,67 +208,57 @@ def jogada(tabuleiro, tabuleiroAtaque, tabuleiroAtacado, jogadorAtacado, jogador
             jogadorPlacar = "jogadorDois"
     match = None
     while match is None:
-
-        coordenadaAtaque = input(
-            f"Insira a coordenada {color['yellow']}(numero)(letra){color['reset']} do seu ataque: ").upper().replace(
-            " ", "")
-        match = re.match(r"(\d+)([A-Z]+)",
-                         coordenadaAtaque)  # tenta combinar as coordenadas do ataque o a forma (linha)(coluna)
+        coordenadaAtaque = input(f"Insira a coordenada {color['yellow']}(numero)(letra){color['reset']} do seu ataque: ").upper().replace(" ", "")
+        match = re.match(r"(\d+)([A-Z]+)", coordenadaAtaque)
         if match is None:
-            print(color['reset'], "Coordenada inválida,", color['reset'], " Tente novamente!")
+            print(f"{color['reset']}Coordenada inválida, Tente novamente!")
         else:
-            tempLinha = int(
-                match.group(1))  # linha e coluna temporárias para verificar antes de confirmar a linha e coluna
-            if match.group(2) in letras:  # se a coluna estiver na lista letras confirma a coluna aletória
+            tempLinha = int(match.group(1))
+            if match.group(2) in letras:
                 tempColuna = letras.index(match.group(2))
             else:
-                print(color['red'], "Coordenadas fora do alcance do tabuleiro,", color['reset'], " Tente novamente!")
+                print(f"{color['red']}Coordenadas fora do alcance do tabuleiro,{color['reset']} Tente novamente!")
                 match = None
                 continue
-            if proporcao < tempLinha or proporcao < tempColuna:  # verifica se as coordenadas estão dentro do tabuleiro
-                print(color['red'], "Coordenadas fora do alcance do tabuleiro,", color['reset'], " Tente novamente!")
+            if proporcao < tempLinha or proporcao < tempColuna:
+                print(f"{color['red']}Coordenadas fora do alcance do tabuleiro,{color['reset']} Tente novamente!")
                 match = None
             else:
-                linha = int(match.group(1))  # após os testes, confirma a linha e a coluna
+                linha = int(match.group(1))
                 coluna = letras.index(match.group(2))
 
-    if tabuleiroAtacado[linha][
-        coluna] == "~":  # se estiver vazio, troca no tabuleiro de ataque e no tabuleiro do adversário os itens por "O"
+    if tabuleiroAtacado[linha][coluna] == "~":
         tabuleiroAtaque[linha][coluna] = "O"
         tabuleiroAtacado[linha][coluna] = "O"
         if modoJogo == "1":
-            placar[jogadorPlacar][
-                "tiros"] += 1  # se estiver jogador x jogador pega o jogadorPlacar(declarado no inicio da def) e adiciona um tiro a mais para ele
+            placar[jogadorPlacar]["tiros"] += 1
         elif modoJogo == "2":
-            placarIA["jogadorUm"][
-                "tiros"] += 1  # se estiver no modo IA x jogador o jogadorPlacar sempre será jogadorUm então não precisa da variavel jogadorPlacar
-    elif tabuleiroAtacado[linha][coluna] == "N":  # se for navio, vira "X"
+            placarIA["jogadorUm"]["tiros"] += 1
+    elif tabuleiroAtacado[linha][coluna] == "N":
         tabuleiroAtaque[linha][coluna] = "X"
         tabuleiroAtacado[linha][coluna] = "X"
         if modoJogo == "2":
-            placarIA["jogadorUm"]["acertos"] += 1  # aumenta os acertos e tiros
+            placarIA["jogadorUm"]["acertos"] += 1
             placarIA["jogadorUm"]["tiros"] += 1
         elif modoJogo == "1":
             placar[jogadorPlacar]["tiros"] += 1
             placar[jogadorPlacar]["acertos"] += 1
     else:
-        print(f"{color['red']}Voce atirou duas vezes no mesmo lugar,{color['reset']}Cuidado!")
+        print(f"{color['red']}Voce atirou duas vezes no mesmo lugar,{color['reset']} Cuidado!")
         #time.sleep(2)
 
-    naviosInimigos = ["Porta-aviões", "Encouraçado", "CruzadorUm", "CruzadorDois", "SubmarinoUm", "SubmarinoDois"]  # pega o nome dos navios
-    naviosAfundadosContador = 0  # inicializa um contador de navios afundados
-    if modoJogo == "1":  # jogador x jogador:
-        for nomeDoNavio in naviosInimigos:  # chama verificarNavioAbatido e se retornar True aumenta o contador
-            if verificarNavioAbatido(statusCoordenadasNavios, tabuleiroAtacado, nomeDoNavio):
+    naviosInimigos = ["Porta-aviões", "Encouraçado", "CruzadorUm", "CruzadorDois", "SubmarinoUm", "SubmarinoDois"]
+    naviosAfundadosContador = 0
+    if modoJogo == "1":
+        for nomeDoNavio in naviosInimigos:
+            if verificarNavioAbatido(statusCoordenadasNavios, tabuleiroAtacado):
                 naviosAfundadosContador += 1
-        placar[jogadorPlacar][
-            "navios_abatidos"] = naviosAfundadosContador  # coloca o resultado do contador dentro do placar
+        placar[jogadorPlacar]["navios_abatidos"] = naviosAfundadosContador
     if modoJogo == "2":
         for nomeDoNavio in naviosInimigos:
-            if verificarNavioAbatido(statusCoordenadasNavios, tabuleiroAtacado, nomeDoNavio):
+            if verificarNavioAbatido(statusCoordenadasNavios, tabuleiroAtacado):
                 naviosAfundadosContador += 1
-        placarIA["jogadorUm"][
-            "navios_abatidos"] = naviosAfundadosContador  # coloca o resultado do contador dentro do placarIA
+        placarIA["jogadorUm"]["navios_abatidos"] = naviosAfundadosContador
 
     os.system('cls' if os.name == 'nt' else 'clear')
     print(f"           Tabuleiro de ataque do comandante {jogador}")
@@ -307,13 +267,13 @@ def jogada(tabuleiro, tabuleiroAtaque, tabuleiroAtacado, jogadorAtacado, jogador
     #time.sleep(5)
     os.system('cls' if os.name == 'nt' else 'clear')
 
-    if not any("N" in linha for linha in tabuleiroAtacado):  # verifica se ainda tem navio nas linhas, se não declara o fim do jogo e retorna True para a variavel fim que chama a jogada
+    if not any("N" in linha for linha in tabuleiroAtacado):
         #time.sleep(2)
         os.system('cls' if os.name == 'nt' else 'clear')
         print(f"Voce acabou com o {jogadorAtacado}!")
         print(f"Vitoria de {jogador}!!!")
         return True
-    return False  # continua o jogo
+    return False
 
 
 def verificarCoordenadasLista(listaCoordenadas, proporcao):
@@ -328,7 +288,6 @@ def verificarSentidoBarco(coordenada_primeiro_acerto, coordenada_segundo_acerto,
     coordenada_guia_caca = [[]]
 
     if coordenada_primeiro_acerto[0] > coordenada_segundo_acerto[0] and (sentido == "" or sentido == "N"):
-
         sentido = "N"
         coordenada_guia_caca = [
             [coordenada_segundo_acerto[0] - 1, coordenada_segundo_acerto[1]],
@@ -342,10 +301,7 @@ def verificarSentidoBarco(coordenada_primeiro_acerto, coordenada_segundo_acerto,
             sentido = "S"
             verificarSentidoBarco(coordenada_primeiro_acerto, coordenada_segundo_acerto, sentido)
 
-
-
     elif coordenada_primeiro_acerto[0] < coordenada_segundo_acerto[0] and (sentido == "" or sentido == "S"):
-
         sentido = "S"
         coordenada_guia_caca = [
             [coordenada_segundo_acerto[0] + 1, coordenada_segundo_acerto[1]],
@@ -360,7 +316,6 @@ def verificarSentidoBarco(coordenada_primeiro_acerto, coordenada_segundo_acerto,
             verificarSentidoBarco(coordenada_primeiro_acerto, coordenada_segundo_acerto, sentido)
 
     if coordenada_primeiro_acerto[1] > coordenada_segundo_acerto[1] and (sentido == "" or sentido == "O"):
-
         sentido = "O"
         coordenada_guia_caca = [
             [coordenada_segundo_acerto[0], coordenada_segundo_acerto[1] - 1],
@@ -374,9 +329,7 @@ def verificarSentidoBarco(coordenada_primeiro_acerto, coordenada_segundo_acerto,
             sentido = "L"
             verificarSentidoBarco(coordenada_primeiro_acerto, coordenada_segundo_acerto, sentido)
 
-
     elif coordenada_primeiro_acerto[1] < coordenada_segundo_acerto[1] and (sentido == "" or sentido == "L"):
-
         sentido = "L"
         coordenada_guia_caca = [
             [coordenada_segundo_acerto[0], coordenada_segundo_acerto[1] + 1],
@@ -393,8 +346,7 @@ def verificarSentidoBarco(coordenada_primeiro_acerto, coordenada_segundo_acerto,
     return coordenada_guia_caca
 
 
-def jogadaIAComEspera(tabuleiroAtaque, tabuleiroAtacado, coordenadasAtacadas, proporcao, statusCoordenadasNavios,
-                      jogador, tabuleiro):
+def jogadaIAComEspera(tabuleiroAtaque, tabuleiroAtacado, coordenadasAtacadas, proporcao, statusCoordenadasNavios, jogador, tabuleiro):
     pararEvento = threading.Event()
     threadLoading = threading.Thread(target=telaJogadorContraIA, args=(pararEvento, "esperando a IA fazer seu ataque"))
     threadLoading.start()
@@ -412,12 +364,11 @@ def jogadaIAComEspera(tabuleiroAtaque, tabuleiroAtacado, coordenadasAtacadas, pr
 
     while not atacou:
         if modo_atual == "aleatorio":
-            linhaEscolhida = random.randint(1, proporcao)  # gera linhas e colunas random
+            linhaEscolhida = random.randint(1, proporcao)
             colunaEscolhida = random.randint(1, proporcao)
 
         elif modo_atual in ["busca", "caça"]:
             if not proximo_ataque or proximo_ataque == [[]]:
-                # lista esgotada
                 modo_atual = "aleatorio"
                 jogadaIAComEspera.modo_atual = modo_atual
                 continue
@@ -428,13 +379,12 @@ def jogadaIAComEspera(tabuleiroAtaque, tabuleiroAtacado, coordenadasAtacadas, pr
                 proximo_ataque.pop(0)
                 continue
 
-        if (linhaEscolhida, colunaEscolhida) not in coordenadasAtacadas:  # verifica se a IA já atacou a coordenada
-            coordenadasAtacadas.add((linhaEscolhida, colunaEscolhida))  # adiciona a coordenada para o conjunto
-            atacou = True  # fim do "loop"
+        if (linhaEscolhida, colunaEscolhida) not in coordenadasAtacadas:
+            coordenadasAtacadas.add((linhaEscolhida, colunaEscolhida))
+            atacou = True
 
     celula = tabuleiroAtacado[linhaEscolhida][colunaEscolhida]
     if celula == "N":
-
         tabuleiroAtaque[linhaEscolhida][colunaEscolhida] = "X"
         tabuleiroAtacado[linhaEscolhida][colunaEscolhida] = "X"
         placarIA["IA"]["tiros"] += 1
@@ -443,32 +393,32 @@ def jogadaIAComEspera(tabuleiroAtaque, tabuleiroAtacado, coordenadasAtacadas, pr
         if modo_atual == "aleatorio":
             acerto_aleatorio = [linhaEscolhida, colunaEscolhida]
             modo_atual = "busca"
-            proximo_ataque = [[linhaEscolhida + 1, colunaEscolhida], [linhaEscolhida - 1, colunaEscolhida],
-                              [linhaEscolhida, colunaEscolhida + 1], [linhaEscolhida, colunaEscolhida - 1]]
+            proximo_ataque = [
+                [linhaEscolhida + 1, colunaEscolhida],
+                [linhaEscolhida - 1, colunaEscolhida],
+                [linhaEscolhida, colunaEscolhida + 1],
+                [linhaEscolhida, colunaEscolhida - 1]
+            ]
             proximo_ataque = verificarCoordenadasLista(proximo_ataque, proporcao)
 
         elif modo_atual == "busca":
             acerto_busca = [linhaEscolhida, colunaEscolhida]
-            if not chama_verificacao_navios_abatidos(statusCoordenadasNavios, tabuleiroAtacado):
+            if not verificarNavioAbatido(statusCoordenadasNavios, tabuleiroAtacado):
                 modo_atual = "caça"
                 proximo_ataque = verificarSentidoBarco(acerto_aleatorio, acerto_busca)
                 proximo_ataque = [c for c in proximo_ataque if (c[0], c[1]) not in coordenadasAtacadas]
             else:
                 modo_atual = modos_ataque[0]
 
-
         elif modo_atual == "caça":
-            if chama_verificacao_navios_abatidos(statusCoordenadasNavios, tabuleiroAtacado):
-                # navio destruido
+            if verificarNavioAbatido(statusCoordenadasNavios, tabuleiroAtacado):
                 modo_atual = "aleatorio"
                 acerto_aleatorio = None
                 acerto_busca = None
             else:
                 proximo_ataque.pop(0)
 
-
-
-    elif celula == "~":  # substitui o resultado do tiro nos tabuleiro e atualiza os placares
+    elif celula == "~":
         tabuleiroAtaque[linhaEscolhida][colunaEscolhida] = "O"
         tabuleiroAtacado[linhaEscolhida][colunaEscolhida] = "O"
         placarIA["IA"]["tiros"] += 1
@@ -492,7 +442,7 @@ def jogadaIAComEspera(tabuleiroAtaque, tabuleiroAtacado, coordenadasAtacadas, pr
 
     naviosAfundadosContador = 0
     for nomeDoNavio in ["Porta-aviões", "Encouraçado", "CruzadorUm", "CruzadorDois", "SubmarinoUm", "SubmarinoDois"]:
-        if verificarNavioAbatido(statusCoordenadasNavios, tabuleiroAtacado, nomeDoNavio):
+        if verificarNavioAbatido(statusCoordenadasNavios, tabuleiroAtacado):
             naviosAfundadosContador += 1
     placarIA["IA"]["navios_abatidos"] = naviosAfundadosContador
 
@@ -507,23 +457,23 @@ def jogadaIAComEspera(tabuleiroAtaque, tabuleiroAtacado, coordenadasAtacadas, pr
     #time.sleep(1)
     os.system('cls' if os.name == 'nt' else 'clear')
 
-    if not any("N" in linha for linha in tabuleiroAtacado):  # se não houver mais navios nas linhas decreta o fim do jogo
+    if not any("N" in linha for linha in tabuleiroAtacado):
         #time.sleep(2)
         os.system('cls' if os.name == 'nt' else 'clear')
         print(f"A IA acabou com você!")
         print(f"Vitoria da IA!!!")
-        return True  # fim de jogo
-    return False  # continua o jogo
+        return True
+    return False
 
 
 def telaJogadorContraIA(pararEvento, frase):
-    pontos = [".", "..",
-              "..."]  # com o import threading a gente pôde deixar uma tela de espera na tela enquanto a IA faz a sua jogada, e usanddo essa lista pode atualizar continuamente a tela com um lopp dor
+    pontos = [".", "..", "..."]
     while not pararEvento.is_set():
         for i in pontos:
             os.system('cls' if os.name == 'nt' else 'clear')
-            print(f"{frase}{i}")  # input da frase, no caso do insereNaviosIa é: "esperando a IA colocar seus navios"
+            print(f"{frase}{i}")
             #time.sleep(0.25)
+
 
 def print_prosicionamento_navios(tabuleiro, jogador):
     print()
@@ -537,39 +487,22 @@ def print_prosicionamento_navios(tabuleiro, jogador):
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
-init()  # init para a biblioteca Colorama
-color = {  # dicionarios para as cores
+init()
+color = {
     'blue': Fore.BLUE,
     'green': Fore.GREEN,
     'red': Fore.RED,
     'yellow': Fore.YELLOW,
     'reset': Fore.RESET
 }
-placar = {  # Dicionaios para o placar, dai so adicionamos os valores
-    "jogadorUm": {
-        "tiros": 0,
-        "acertos": 0,
-        "navios_abatidos": 0
-    },
-    "jogadorDois": {
-        "tiros": 0,
-        "acertos": 0,
-        "navios_abatidos": 0
-    }
+placar = {
+    "jogadorUm": {"tiros": 0, "acertos": 0, "navios_abatidos": 0},
+    "jogadorDois": {"tiros": 0, "acertos": 0, "navios_abatidos": 0}
 }
 placarIA = {
-    "jogadorUm": {
-        "tiros": 0,
-        "acertos": 0,
-        "navios_abatidos": 0
-    },
-    "IA": {
-        "tiros": 0,
-        "acertos": 0,
-        "navios_abatidos": 0
-    }
+    "jogadorUm": {"tiros": 0, "acertos": 0, "navios_abatidos": 0},
+    "IA": {"tiros": 0, "acertos": 0, "navios_abatidos": 0}
 }
-# Lista letras que começa no vazio para a funcionalidade da obtenção da coluna nas funçoes de jogada e inserir navios. Além de servir para colocar as coordenadas no tabuleiro
 letras = [" "] + ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T",
                   "U", "V", "W", "X", "Y", "Z"]
 letrasDois = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U",
@@ -580,49 +513,48 @@ proporcao = 0
 continuar = ""
 jogadorUm = []
 jogadorDois = []
-portaAvioes = 5  # tamanhos dos navios
+portaAvioes = 5
 encouracado = 4
 cruzador = 3
 submarino = 2
 
 modoJogo = input(f"Insira {color['yellow']}[1]{color['reset']} se voce quer jogar contra um adversário local ou digite {color['yellow']}[2]{color['reset']} se voce quer jogar contra IA: ")
 
-while modoJogo != "1" and modoJogo != "2":  # se o "input" for inválido o código pede o "input" de novo, até obter um resultado satisfatório
-    print(color['red'], "Erro, tente novamente!", color['reset'], " Dessa vez tente usar, apenas 1 ou 2 para seguir com as escolhas.")
+while modoJogo != "1" and modoJogo != "2":
+    print(f"{color['red']}Erro, tente novamente!{color['reset']} Dessa vez tente usar, apenas 1 ou 2 para seguir com as escolhas.")
     modoJogo = input(f"insira {color['yellow']}[1]{color['reset']} se voce quer jogar contra um adversário local ou digite {color['yellow']}[2]{color['reset']} se voce quer jogar contra IA: ")
 
-if modoJogo == "1":  # condicao para utilizacao das variaveis coretas conforme o modo de jogo
+if modoJogo == "1":
     usernameUm = input("Jogador 1, insira seu nome: ")
     usernameDois = input("Jogador 2, insira seu nome: ")
-    jogadorUm.append(usernameUm)  # adicao na lista dos jogadores
+    jogadorUm.append(usernameUm)
     jogadorDois.append(usernameDois)
 
-elif modoJogo == "2":  # condicao para utilizacao das variaveis coretas conforme o modo de jogo
+elif modoJogo == "2":
     usernameUm = input("Insira seu username: ")
     usernameDois = "IA"
     jogadorUm.append(usernameUm)
     jogadorDois.append(usernameDois)
 
 proporcao = 0
-while proporcao == 0:  # continua até a proporção receber um valor
+while proporcao == 0:
     try:
         proporcaoTemp = int(input("Insira o numero que voce quer usar de prorporção para o tabuleiro: "))
-        if proporcaoTemp < 5:  # condicao de minimo do tabuleiro jogável
+        if proporcaoTemp < 5:
             print(f"{color['red']}Proporção deve ser no mínimo 5,{color['reset']} tente novamente!")
         if proporcaoTemp >= 5:
             proporcao = proporcaoTemp
     except Exception:
-        print(color['red'], "A proporção deve ser numérica,", color['reset'], " tente novamente!")
+        print(f"{color['red']}A proporção deve ser numérica,{color['reset']} tente novamente!")
 
-if proporcao > 26:  # se a proporção for maior que 26 a lista letras vai receber cordenadas AA, AB, AC...BA, BB...ZZ.
+if proporcao > 26:
     letrasTemp = []
-
     for i in letrasDois:
         for j in letras:
-            letrasTemp.append(f"{i}{j}")  # usado para gerar esse padrão AA, AB...
-    letras.extend(letrasTemp)  # adiciona essa lista criada para o letras
+            letrasTemp.append(f"{i}{j}")
+    letras.extend(letrasTemp)
 
-while continuar != "X":  # Esse while coloca a condicao de o jogador continuar (jogar mais uma vez) ou terminar o jogo, X contina e enter termina
+while continuar != "X":
     fim = False
     coordenadasAtacadas = set()
 
@@ -630,7 +562,7 @@ while continuar != "X":  # Esse while coloca a condicao de o jogador continuar (
         ["Porta-aviões", 5], ["Encouraçado", 4], ["CruzadorUm", 3], ["CruzadorDois", 3], ["SubmarinoUm", 2], ["SubmarinoDois", 2]
     ]
 
-    statusCoordenadasNaviosUm = {  # Criacao de um dicionário para contar os Navios_abatidos a cada novo jogo
+    statusCoordenadasNaviosUm = {
         "Porta-aviões": [], "Encouraçado": [], "CruzadorUm": [],
         "CruzadorDois": [], "SubmarinoUm": [], "SubmarinoDois": []
     }
@@ -645,26 +577,24 @@ while continuar != "X":  # Esse while coloca a condicao de o jogador continuar (
 
     placarIA = {"jogadorUm": {"tiros": 0, "acertos": 0, "navios_abatidos": 0},
                 "IA": {"tiros": 0, "acertos": 0, "navios_abatidos": 0}}
+
     tabuleiro = criaMesa(proporcao)
     tabuleiroUm = criaMesa(proporcao)
     tabuleiroDois = criaMesa(proporcao)
     tabuleiroAtaqueUm = criaMesa(proporcao)
-    tabuleiroAtaqueDois = criaMesa(proporcao)  # recriando os tabuleiros
+    tabuleiroAtaqueDois = criaMesa(proporcao)
     introducaoJogo()
-
 
     for i in range(len(statusCoordenadasNaviosUm)):
         insereNavios(jogadorUm, tabuleiroUm, navios_name_size[i][1], navios_name_size[i][0], proporcao, linha, coluna, statusCoordenadasNaviosUm)
 
     print_prosicionamento_navios(tabuleiroUm, jogadorUm)
 
-
-
     if usernameDois == "IA":
         for i in range(len(statusCoordenadasNaviosDois)):
-            insereNaviosIA(tabuleiroDois, navios_name_size[i][1] , proporcao, linha, coluna, navios_name_size[i][1], statusCoordenadasNaviosDois)
+            insereNaviosIA(tabuleiroDois, navios_name_size[i][1], proporcao, linha, coluna, navios_name_size[i][0], statusCoordenadasNaviosDois)
     else:
-        introducaoJogo()  # em outro caso, chama a função chamaInsereNavios
+        introducaoJogo()
         for i in range(len(statusCoordenadasNaviosDois)):
             insereNavios(jogadorDois, tabuleiroDois, navios_name_size[i][1], navios_name_size[i][0], proporcao, linha, coluna, statusCoordenadasNaviosDois)
 
@@ -672,31 +602,23 @@ while continuar != "X":  # Esse while coloca a condicao de o jogador continuar (
 
     introducaoBatalha()
 
-    while fim is False:  # Esse laco continua até que alguém ganhe, ele que mantém o jogo acontecendo
-        if usernameDois == "IA":  # verifica se voce esta contra IA
-            fim = jogada(tabuleiroUm, tabuleiroAtaqueUm, tabuleiroDois, jogadorDois, jogadorUm, statusCoordenadasNaviosDois)  # Essa condicao é muito importante, para fazer o jogo parar
-            if fim is False:  # entao dependendo do que a def jogada retornar o jogo acaba, no caso se retornar True o jogo acaba
+    while fim is False:
+        if usernameDois == "IA":
+            fim = jogada(tabuleiroUm, tabuleiroAtaqueUm, tabuleiroDois, jogadorDois, jogadorUm, statusCoordenadasNaviosDois)
+            if fim is False:
                 fim = jogadaIAComEspera(tabuleiroAtaqueDois, tabuleiroUm, coordenadasAtacadas, proporcao,
                                         statusCoordenadasNaviosUm, jogadorDois, tabuleiroDois)
-
-        else:  # caso não seja contra IA ele puxa a jogada certa para continuar
-            fim = jogada(tabuleiroUm, tabuleiroAtaqueUm, tabuleiroDois, jogadorDois, jogadorUm,
-                         statusCoordenadasNaviosDois)  # mesma condicao do de cima porem, sem a IA
+        else:
+            fim = jogada(tabuleiroUm, tabuleiroAtaqueUm, tabuleiroDois, jogadorDois, jogadorUm, statusCoordenadasNaviosDois)
             if fim is False:
-                fim = jogada(tabuleiroDois, tabuleiroAtaqueDois, tabuleiroUm, jogadorUm, jogadorDois,
-                             statusCoordenadasNaviosUm)
+                fim = jogada(tabuleiroDois, tabuleiroAtaqueDois, tabuleiroUm, jogadorUm, jogadorDois, statusCoordenadasNaviosUm)
 
     print("-" * 20, "Placar final", "-" * 20)
-    if modoJogo == "1":  # condicao printar o placar certo, já colorido, separando os modos
-        print(
-            f"Comandante {jogadorUm}:\n\tTiros: {placar['jogadorUm']['tiros']}\n\tAcertos: {placar['jogadorUm']['acertos']}\n\tNavios abatidos: {placar['jogadorUm']['navios_abatidos']}")  # prints do placar
-        print(
-            f"Comandante {jogadorDois}:\n\tTiros: {placar['jogadorDois']['tiros']}\n\tAcertos: {placar['jogadorDois']['acertos']}\n\tNavios abatidos: {placar['jogadorDois']['navios_abatidos']}")
-    else:  # else para printar o placar correto
-        print(
-            f"Comandante {jogadorUm}:\n\tTiros: {placarIA['jogadorUm']['tiros']}\n\tAcertos: {placarIA['jogadorUm']['acertos']}\n\tNavios abatidos: {placarIA['jogadorUm']['navios_abatidos']}")
-        print(
-            f"IA:\n\tTiros: {placarIA['IA']['tiros']}\n\tAcertos: {placarIA['IA']['acertos']}\n\tNavios abatidos: {placarIA['IA']['navios_abatidos']}")
+    if modoJogo == "1":
+        print(f"Comandante {jogadorUm}:\n\tTiros: {placar['jogadorUm']['tiros']}\n\tAcertos: {placar['jogadorUm']['acertos']}\n\tNavios abatidos: {placar['jogadorUm']['navios_abatidos']}")
+        print(f"Comandante {jogadorDois}:\n\tTiros: {placar['jogadorDois']['tiros']}\n\tAcertos: {placar['jogadorDois']['acertos']}\n\tNavios abatidos: {placar['jogadorDois']['navios_abatidos']}")
+    else:
+        print(f"Comandante {jogadorUm}:\n\tTiros: {placarIA['jogadorUm']['tiros']}\n\tAcertos: {placarIA['jogadorUm']['acertos']}\n\tNavios abatidos: {placarIA['jogadorUm']['navios_abatidos']}")
+        print(f"IA:\n\tTiros: {placarIA['IA']['tiros']}\n\tAcertos: {placarIA['IA']['acertos']}\n\tNavios abatidos: {placarIA['IA']['navios_abatidos']}")
 
-    continuar = input(
-        f"pressione{color['yellow']} [ENTER] {color['reset']}para jogar mais uma e insira {color['yellow']}[X]{color['reset']} para parar de jogar: ").upper()
+    continuar = input(f"pressione{color['yellow']} [ENTER] {color['reset']}para jogar mais uma e insira {color['yellow']}[X]{color['reset']} para parar de jogar: ").upper()
