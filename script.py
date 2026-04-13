@@ -3,9 +3,6 @@ import random
 import re
 import os
 import threading
-from operator import truediv
-from turtledemo.chaos import jumpto
-
 from colorama import Fore, init
 
 
@@ -56,7 +53,6 @@ def insereNavios(jogador, tabuleiro, tamanhoNavio, nomeNavio, proporcao, linha, 
             printaMatriz(tabuleiro)
             print()
             print(f"As coordenadas que você colocar serão a {color['yellow']}ponta esquerda{color['reset']} do navio. O resto dele será {color['yellow']}colocado abaixo ou à direita{color['reset']} dessa coordenada.")
-            coordenadaNavio = ""
             match = None
 
             while match is None:
@@ -135,7 +131,7 @@ def introducaoJogo():
     print()
 
 
-def insereNaviosIA(tabuleiro, tamanhoNavio, proporcao, linha, coluna, nomeNavio, statusCoordenadasNavios):
+def insereNaviosIA(tabuleiro, tamanhoNavio, proporcao, nomeNavio, statusCoordenadasNavios):
     colocouNavios = False
     while not colocouNavios:
         linha = random.randint(1, proporcao)
@@ -192,7 +188,7 @@ def introducaoBatalha():
     """)
 
 
-def jogada(tabuleiro, tabuleiroAtaque, tabuleiroAtacado, jogadorAtacado, jogador, statusCoordenadasNavios):
+def jogada(tabuleiro, tabuleiroAtaque, tabuleiroAtacado, jogadorAtacado, jogador, statusCoordenadasNavios, proporcao):
     print(f"           Tabuleiro com seus navios, comandante {jogador}")
     printaMatriz(tabuleiro)
     print(f"           Tabuleiro de ataque")
@@ -200,6 +196,9 @@ def jogada(tabuleiro, tabuleiroAtaque, tabuleiroAtacado, jogadorAtacado, jogador
     print()
     print(f"\t{color['red']}ATENÇÃO{color['reset']}\n\tA letra {color['green']}N{color['reset']} representa as partes do navio que não foram atingidas \n\tA letra {color['red']}X{color['reset']} representa acertos nos navios\n\tA letra {color['yellow']}O{color['reset']} representa acertos na água")
     jogadorPlacar = ""
+    linha = -1
+    coluna = -1
+
     if modoJogo == "1":
         if tabuleiro == tabuleiroUm:
             jogadorPlacar = "jogadorUm"
@@ -244,6 +243,10 @@ def jogada(tabuleiro, tabuleiroAtaque, tabuleiroAtacado, jogadorAtacado, jogador
             placar[jogadorPlacar]["acertos"] += 1
     else:
         print(f"{color['red']}Voce atirou duas vezes no mesmo lugar,{color['reset']} Cuidado!")
+        if modoJogo == "1":
+            placar[jogadorPlacar]["tiros"] += 1
+        elif modoJogo == "2":
+            placarIA["jogadorUm"]["tiros"] += 1
         #time.sleep(2)
 
     naviosInimigos = ["Porta-aviões", "Encouraçado", "CruzadorUm", "CruzadorDois", "SubmarinoUm", "SubmarinoDois"]
@@ -283,7 +286,7 @@ def verificarCoordenadasLista(listaCoordenadas, proporcao):
     return listaCoordenadas
 
 
-def verificarSentidoBarco(coordenada_primeiro_acerto, coordenada_segundo_acerto, sentido=""):
+def verificarSentidoBarco(coordenada_primeiro_acerto, coordenada_segundo_acerto, proporcao,sentido=""):
     coordenada_guia_caca = [[]]
 
     if coordenada_primeiro_acerto[0] > coordenada_segundo_acerto[0] and (sentido == "" or sentido == "N"):
@@ -345,7 +348,7 @@ def verificarSentidoBarco(coordenada_primeiro_acerto, coordenada_segundo_acerto,
     return coordenada_guia_caca
 
 
-def jogadaIAComEspera(tabuleiroAtaque, tabuleiroAtacado, coordenadasAtacadas, proporcao, statusCoordenadasNavios, jogador, tabuleiro):
+def jogadaIAComEspera(tabuleiroAtaque, tabuleiroAtacado, coordenadasAtacadas, proporcao, statusCoordenadasNavios):
     pararEvento = threading.Event()
     threadLoading = threading.Thread(target=telaJogadorContraIA, args=(pararEvento, "esperando a IA fazer seu ataque"))
     threadLoading.start()
@@ -404,7 +407,7 @@ def jogadaIAComEspera(tabuleiroAtaque, tabuleiroAtacado, coordenadasAtacadas, pr
             acerto_busca = [linhaEscolhida, colunaEscolhida]
             if not verificarNavioAbatido(statusCoordenadasNavios, tabuleiroAtacado):
                 modo_atual = "caça"
-                proximo_ataque = verificarSentidoBarco(acerto_aleatorio, acerto_busca)
+                proximo_ataque = verificarSentidoBarco(acerto_aleatorio, acerto_busca, proporcao)
                 proximo_ataque = [c for c in proximo_ataque if (c[0], c[1]) not in coordenadasAtacadas]
             else:
                 modo_atual = modos_ataque[0]
@@ -427,7 +430,7 @@ def jogadaIAComEspera(tabuleiroAtaque, tabuleiroAtacado, coordenadasAtacadas, pr
 
         elif modo_atual == "caça":
             if acerto_aleatorio and acerto_busca:
-                proximo_ataque = verificarSentidoBarco(acerto_busca, acerto_aleatorio)
+                proximo_ataque = verificarSentidoBarco(acerto_busca, acerto_aleatorio, proporcao)
                 proximo_ataque = [c for c in proximo_ataque if (c[0], c[1]) not in coordenadasAtacadas]
                 if not proximo_ataque or proximo_ataque == [[]]:
                     modo_atual = "aleatorio"
@@ -439,11 +442,10 @@ def jogadaIAComEspera(tabuleiroAtaque, tabuleiroAtacado, coordenadasAtacadas, pr
     jogadaIAComEspera.modo_atual = modo_atual
     jogadaIAComEspera.proximo_ataque = proximo_ataque
 
-    naviosAfundadosContador = 0
-    for nomeDoNavio in ["Porta-aviões", "Encouraçado", "CruzadorUm", "CruzadorDois", "SubmarinoUm", "SubmarinoDois"]:
-        if verificarNavioAbatido(statusCoordenadasNavios, tabuleiroAtacado):
-            naviosAfundadosContador += 1
-    placarIA["IA"]["navios_abatidos"] = naviosAfundadosContador
+
+    if verificarNavioAbatido(statusCoordenadasNaviosDois, tabuleiroAtacado):
+        placarIA["IA"]["navios_abatidos"] += 1
+
 
     #time.sleep(1.5)
     pararEvento.set()
@@ -494,24 +496,17 @@ color = {
     'yellow': Fore.YELLOW,
     'reset': Fore.RESET
 }
-placar = {
-    "jogadorUm": {"tiros": 0, "acertos": 0, "navios_abatidos": 0},
-    "jogadorDois": {"tiros": 0, "acertos": 0, "navios_abatidos": 0}
-}
-placarIA = {
-    "jogadorUm": {"tiros": 0, "acertos": 0, "navios_abatidos": 0},
-    "IA": {"tiros": 0, "acertos": 0, "navios_abatidos": 0}
-}
-letras = [" "] + ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T",
-                  "U", "V", "W", "X", "Y", "Z"]
-letrasDois = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U",
-              "V", "W", "X", "Y", "Z"]
+
+letras = [" "] + list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+letrasDois = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
 linha = 0
 coluna = 0
 proporcao = 0
 continuar = ""
-jogadorUm = []
-jogadorDois = []
+jogadorUm = ""
+jogadorDois = ""
+usernameUm = ""
+usernameDois = ""
 portaAvioes = 5
 encouracado = 4
 cruzador = 3
@@ -524,16 +519,26 @@ while modoJogo != "1" and modoJogo != "2":
     modoJogo = input(f"insira {color['yellow']}[1]{color['reset']} se voce quer jogar contra um adversário local ou digite {color['yellow']}[2]{color['reset']} se voce quer jogar contra IA: ")
 
 if modoJogo == "1":
-    usernameUm = input("Jogador 1, insira seu nome: ")
-    usernameDois = input("Jogador 2, insira seu nome: ")
-    jogadorUm.append(usernameUm)
-    jogadorDois.append(usernameDois)
+    while (usernameDois or usernameUm) == "":
+        usernameUm = input("Jogador 1, insira seu nome: ")
+        usernameDois = input("Jogador 2, insira seu nome: ")
+        if (usernameDois or usernameUm) == "":
+            print("Erro: Você deve inserir um username para cada jogador!")
+            continue
+        jogadorUm = usernameUm
+        jogadorDois = usernameDois
 
 elif modoJogo == "2":
-    usernameUm = input("Insira seu username: ")
+    while usernameUm == "":
+        usernameUm = input("Insira seu username: ")
+        if usernameUm == "":
+            print("Erro: Você deve inserir um username!")
+            continue
+
+        jogadorUm = usernameUm
+
     usernameDois = "IA"
-    jogadorUm.append(usernameUm)
-    jogadorDois.append(usernameDois)
+    jogadorDois = usernameDois
 
 proporcao = 0
 while proporcao == 0:
@@ -577,7 +582,6 @@ while continuar != "X":
     placarIA = {"jogadorUm": {"tiros": 0, "acertos": 0, "navios_abatidos": 0},
                 "IA": {"tiros": 0, "acertos": 0, "navios_abatidos": 0}}
 
-    tabuleiro = criaMesa(proporcao)
     tabuleiroUm = criaMesa(proporcao)
     tabuleiroDois = criaMesa(proporcao)
     tabuleiroAtaqueUm = criaMesa(proporcao)
@@ -591,7 +595,7 @@ while continuar != "X":
 
     if usernameDois == "IA":
         for i in range(len(statusCoordenadasNaviosDois)):
-            insereNaviosIA(tabuleiroDois, navios_name_size[i][1], proporcao, linha, coluna, navios_name_size[i][0], statusCoordenadasNaviosDois)
+            insereNaviosIA(tabuleiroDois, navios_name_size[i][1], proporcao, navios_name_size[i][0], statusCoordenadasNaviosDois)
     else:
         introducaoJogo()
         for i in range(len(statusCoordenadasNaviosDois)):
@@ -603,14 +607,14 @@ while continuar != "X":
 
     while not fim:
         if usernameDois == "IA":
-            fim = jogada(tabuleiroUm, tabuleiroAtaqueUm, tabuleiroDois, jogadorDois, jogadorUm, statusCoordenadasNaviosDois)
+            fim = jogada(tabuleiroUm, tabuleiroAtaqueUm, tabuleiroDois, jogadorDois, jogadorUm, statusCoordenadasNaviosDois, proporcao)
             if not fim:
                 fim = jogadaIAComEspera(tabuleiroAtaqueDois, tabuleiroUm, coordenadasAtacadas, proporcao,
-                                        statusCoordenadasNaviosUm, jogadorDois, tabuleiroDois)
+                                        statusCoordenadasNaviosUm)
         else:
-            fim = jogada(tabuleiroUm, tabuleiroAtaqueUm, tabuleiroDois, jogadorDois, jogadorUm, statusCoordenadasNaviosDois)
+            fim = jogada(tabuleiroUm, tabuleiroAtaqueUm, tabuleiroDois, jogadorDois, jogadorUm, statusCoordenadasNaviosDois, proporcao)
             if not fim:
-                fim = jogada(tabuleiroDois, tabuleiroAtaqueDois, tabuleiroUm, jogadorUm, jogadorDois, statusCoordenadasNaviosUm)
+                fim = jogada(tabuleiroDois, tabuleiroAtaqueDois, tabuleiroUm, jogadorUm, jogadorDois, statusCoordenadasNaviosUm, proporcao)
 
     print("-" * 20, "Placar final", "-" * 20)
     if modoJogo == "1":
