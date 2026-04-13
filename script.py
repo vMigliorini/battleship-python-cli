@@ -3,6 +3,8 @@ import random
 import re
 import os
 import threading
+from operator import truediv
+
 from colorama import Fore, init
 
 
@@ -25,7 +27,7 @@ def criar_tabuleiro(n1, letras):
     return tabuleiro
 
 
-def printar_tabuleiro(tabuleiro):
+def printar_tabuleiro(tabuleiro, color):
     for i in range(len(tabuleiro)):
         print("\t", end=" ")
         for j in range(len(tabuleiro[i])):
@@ -45,12 +47,12 @@ def printar_tabuleiro(tabuleiro):
         print()
 
 
-def inserir_navios(jogador, tabuleiro, tamanho_navio, nome_navio, proporcao, linha, coluna, coords_navios, letras):
+def inserir_navios(jogador, tabuleiro, tamanho_navio, nome_navio, proporcao, linha, coluna, coords_navios, letras, color):
     posicionou_navio = False
     while not posicionou_navio:
         try:
             print(f"           Tabuleiro do {jogador}")
-            printar_tabuleiro(tabuleiro)
+            printar_tabuleiro(tabuleiro, color)
             print()
             print(f"As coordenadas que você colocar serão a {color['yellow']}ponta esquerda{color['reset']} do navio. O resto dele será {color['yellow']}colocado abaixo ou à direita{color['reset']} dessa coordenada.")
             match = None
@@ -115,7 +117,7 @@ def inserir_navios(jogador, tabuleiro, tamanho_navio, nome_navio, proporcao, lin
             continue
 
 
-def introducao_jogo():
+def introducao_jogo(color):
     print("\n" + "=" * 50)
     print("🛳🌊 BEM-VINDO AO JOGO BATALHA NAVAL 🌊🛳")
     print("=" * 50)
@@ -188,25 +190,12 @@ def introducao_batalha():
     """)
 
 
-def jogada(tabuleiro, tabuleiro_ataque, tabuleiro_atacado, jogador_atacado, jogador, coords_navios, proporcao, modo_jogo, placar_ia, letras):
-    print(f"           Tabuleiro com seus navios, comandante {jogador}")
-    printar_tabuleiro(tabuleiro)
-    print(f"           Tabuleiro de ataque")
-    printar_tabuleiro(tabuleiro_ataque)
-    print()
-    print(f"\t{color['red']}ATENÇÃO{color['reset']}\n\tA letra {color['green']}N{color['reset']} representa as partes do navio que não foram atingidas \n\tA letra {color['red']}X{color['reset']} representa acertos nos navios\n\tA letra {color['yellow']}O{color['reset']} representa acertos na água")
-    chave_placar = ""
-    linha = -1
-    coluna = -1
-
-    if modo_jogo == "1":
-        if tabuleiro == tabuleiro_um:
-            chave_placar = "jogadorUm"
-        elif tabuleiro == tabuleiro_dois:
-            chave_placar = "jogadorDois"
+def validar_coordenada(color, letras, proporcao):
     match = None
     while match is None:
-        coordenada_ataque = input(f"Insira a coordenada {color['yellow']}(numero)(letra){color['reset']} do seu ataque: ").upper().replace(" ", "")
+        coordenada_ataque = input(
+            f"Insira a coordenada {color['yellow']}(numero)(letra){color['reset']} do seu ataque: ").upper().replace(
+            " ", "")
         match = re.match(r"(\d+)([A-Z]+)", coordenada_ataque)
         if match is None:
             print(f"{color['reset']}Coordenada inválida, Tente novamente!")
@@ -222,9 +211,22 @@ def jogada(tabuleiro, tabuleiro_ataque, tabuleiro_atacado, jogador_atacado, joga
                 print(f"{color['red']}Coordenadas fora do alcance do tabuleiro,{color['reset']} Tente novamente!")
                 match = None
             else:
-                linha = int(match.group(1))
-                coluna = letras.index(match.group(2))
+                linha_final = int(match.group(1))
+                coluna_final = letras.index(match.group(2))
+                return linha_final, coluna_final
 
+def atualizar_placar(coords_navios, tabuleiro_atacado, modo_jogo, placar, chave_placar, placar_ia):
+    navios_afundados = sum(
+        1 for coords in coords_navios.values()
+        if coords and all(tabuleiro_atacado[c[0]][c[1]] == "X" for c in coords)
+    )
+
+    if modo_jogo == "1":
+        placar[chave_placar]["navios_abatidos"] = navios_afundados
+    elif modo_jogo == "2":
+        placar_ia["jogadorUm"]["navios_abatidos"] = navios_afundados
+
+def aplicar_tiro(tabuleiro_atacado, tabuleiro_ataque, linha, coluna, modo_jogo, placar, chave_placar, placar_ia, color):
     if tabuleiro_atacado[linha][coluna] == "~":
         tabuleiro_ataque[linha][coluna] = "O"
         tabuleiro_atacado[linha][coluna] = "O"
@@ -249,28 +251,45 @@ def jogada(tabuleiro, tabuleiro_ataque, tabuleiro_atacado, jogador_atacado, joga
             placar_ia["jogadorUm"]["tiros"] += 1
         #time.sleep(2)
 
-    navios_afundados = sum(
-        1 for coords in coords_navios.values()
-        if coords and all(tabuleiro_atacado[c[0]][c[1]] == "X" for c in coords)
-    )
-
-    if modo_jogo == "1":
-        placar[chave_placar]["navios_abatidos"] = navios_afundados
-    elif modo_jogo == "2":
-        placar_ia["jogadorUm"]["navios_abatidos"] = navios_afundados
-
-    os.system('cls' if os.name == 'nt' else 'clear')
-    print(f"           Tabuleiro de ataque do comandante {jogador}")
-    printar_tabuleiro(tabuleiro_ataque)
-    print(f"\tEssa foi sua jogada, {jogador}. Passe a vez para o outro jogador!")
-    #time.sleep(5)
-    os.system('cls' if os.name == 'nt' else 'clear')
-
+def verificar_fim_de_jogo(tabuleiro_atacado, jogador_atacado, jogador):
     if not any("N" in linha for linha in tabuleiro_atacado):
         #time.sleep(2)
         os.system('cls' if os.name == 'nt' else 'clear')
         print(f"Voce acabou com o {jogador_atacado}!")
         print(f"Vitoria de {jogador}!!!")
+        return True
+    return False
+
+def jogada(tabuleiro, tabuleiro_ataque, tabuleiro_atacado, jogador_atacado, coords_navios, proporcao, modo_jogo, placar_ia, letras, color, placar, jogador):
+    print(f"           Tabuleiro com seus navios, comandante {jogador}")
+    printar_tabuleiro(tabuleiro, color)
+    print(f"           Tabuleiro de ataque")
+    printar_tabuleiro(tabuleiro_ataque, color)
+    print()
+    print(f"\t{color['red']}ATENÇÃO{color['reset']}\n\tA letra {color['green']}N{color['reset']} representa as partes do navio que não foram atingidas \n\tA letra {color['red']}X{color['reset']} representa acertos nos navios\n\tA letra {color['yellow']}O{color['reset']} representa acertos na água")
+
+
+    chave_placar = jogador
+
+    tupla_coordenadas = validar_coordenada(color, letras, proporcao)
+
+    linha = tupla_coordenadas[0]
+    coluna = tupla_coordenadas[1]
+
+    aplicar_tiro(tabuleiro_atacado, tabuleiro_ataque, linha, coluna, modo_jogo, placar, chave_placar, placar_ia, color)
+
+    atualizar_placar(coords_navios, tabuleiro_atacado, modo_jogo, placar, chave_placar, placar_ia)
+
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print(f"           Tabuleiro de ataque do comandante {jogador}")
+    printar_tabuleiro(tabuleiro_ataque, color)
+    print(f"\tEssa foi sua jogada, {jogador}. Passe a vez para o outro jogador!")
+    #time.sleep(5)
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+    fim = verificar_fim_de_jogo(tabuleiro_atacado, jogador_atacado, jogador)
+
+    if fim:
         return True
     return False
 
@@ -345,7 +364,7 @@ def calcular_proximos_ataques(primeiro_acerto, segundo_acerto, proporcao, sentid
     return proximos_ataques
 
 
-def jogada_ia(tabuleiro_ataque, tabuleiro_atacado, coordenadas_atacadas, proporcao, coords_navios, placar_ia):
+def jogada_ia(tabuleiro_ataque, tabuleiro_atacado, coordenadas_atacadas, proporcao, coords_navios, placar_ia, color):
     parar_evento = threading.Event()
     thread_loading = threading.Thread(target=tela_carregando, args=(parar_evento, "esperando a IA fazer seu ataque"))
     thread_loading.start()
@@ -448,7 +467,7 @@ def jogada_ia(tabuleiro_ataque, tabuleiro_atacado, coordenadas_atacadas, proporc
 
     os.system('cls' if os.name == 'nt' else 'clear')
     print(f"           seu tabuleiro após o ataque")
-    printar_tabuleiro(tabuleiro_atacado)
+    printar_tabuleiro(tabuleiro_atacado, color)
     print(f"A IA fez sua jogada!")
     #time.sleep(1)
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -471,9 +490,9 @@ def tela_carregando(parar_evento, frase):
             #time.sleep(0.25)
 
 
-def printar_posicionamento_navios(tabuleiro, jogador):
+def printar_posicionamento_navios(tabuleiro, jogador, color):
     print()
-    printar_tabuleiro(tabuleiro)
+    printar_tabuleiro(tabuleiro, color)
     print()
     print(f"\t Seu posicionamento final! 👆👆")
     #time.sleep(2)
@@ -483,134 +502,135 @@ def printar_posicionamento_navios(tabuleiro, jogador):
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
-init()
-color = {
-    'blue': Fore.BLUE,
-    'green': Fore.GREEN,
-    'red': Fore.RED,
-    'yellow': Fore.YELLOW,
-    'reset': Fore.RESET
-}
+def main():
+    init()
+    color = {
+        'blue': Fore.BLUE,
+        'green': Fore.GREEN,
+        'red': Fore.RED,
+        'yellow': Fore.YELLOW,
+        'reset': Fore.RESET
+    }
 
-letras = [" "] + list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-letras_base = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-linha = 0
-coluna = 0
-proporcao = 0
-continuar = ""
-jogador_um = ""
-jogador_dois = ""
-username_um = ""
-username_dois = ""
+    letras = [" "] + list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    letras_base = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    linha = 0
+    coluna = 0
+    proporcao = 0
+    continuar = ""
+    jogador_um = ""
+    jogador_dois = ""
+    username_um = ""
+    username_dois = ""
 
-modo_jogo = input(f"Insira {color['yellow']}[1]{color['reset']} se voce quer jogar contra um adversário local ou digite {color['yellow']}[2]{color['reset']} se voce quer jogar contra IA: ")
+    modo_jogo = input(f"Insira {color['yellow']}[1]{color['reset']} se voce quer jogar contra um adversário local ou digite {color['yellow']}[2]{color['reset']} se voce quer jogar contra IA: ")
 
-while modo_jogo != "1" and modo_jogo != "2":
-    print(f"{color['red']}Erro, tente novamente!{color['reset']} Dessa vez tente usar, apenas 1 ou 2 para seguir com as escolhas.")
-    modo_jogo = input(f"insira {color['yellow']}[1]{color['reset']} se voce quer jogar contra um adversário local ou digite {color['yellow']}[2]{color['reset']} se voce quer jogar contra IA: ")
+    while modo_jogo != "1" and modo_jogo != "2":
+        print(f"{color['red']}Erro, tente novamente!{color['reset']} Dessa vez tente usar, apenas 1 ou 2 para seguir com as escolhas.")
+        modo_jogo = input(f"insira {color['yellow']}[1]{color['reset']} se voce quer jogar contra um adversário local ou digite {color['yellow']}[2]{color['reset']} se voce quer jogar contra IA: ")
 
-if modo_jogo == "1":
-    while username_um == "" or username_dois == "":
-        username_um = input("Jogador 1, insira seu nome: ")
-        username_dois = input("Jogador 2, insira seu nome: ")
-        if username_um == "" or username_dois == "":
-            print("Erro: Você deve inserir um username para cada jogador!")
-            continue
-        jogador_um = username_um
+    if modo_jogo == "1":
+        while username_um == "" or username_dois == "":
+            username_um = input("Jogador 1, insira seu nome: ")
+            username_dois = input("Jogador 2, insira seu nome: ")
+            if username_um == "" or username_dois == "":
+                print("Erro: Você deve inserir um username para cada jogador!")
+                continue
+            jogador_um = username_um
+            jogador_dois = username_dois
+
+    elif modo_jogo == "2":
+        while username_um == "":
+            username_um = input("Insira seu username: ")
+            if username_um == "":
+                print("Erro: Você deve inserir um username!")
+                continue
+            jogador_um = username_um
+
+        username_dois = "IA"
         jogador_dois = username_dois
 
-elif modo_jogo == "2":
-    while username_um == "":
-        username_um = input("Insira seu username: ")
-        if username_um == "":
-            print("Erro: Você deve inserir um username!")
-            continue
-        jogador_um = username_um
+    proporcao = 0
+    while proporcao == 0:
+        try:
+            proporcao_temp = int(input("Insira o numero que voce quer usar de prorporção para o tabuleiro: "))
+            if proporcao_temp < 5:
+                print(f"{color['red']}Proporção deve ser no mínimo 5,{color['reset']} tente novamente!")
+            if proporcao_temp >= 5:
+                proporcao = proporcao_temp
+        except Exception:
+            print(f"{color['red']}A proporção deve ser numérica,{color['reset']} tente novamente!")
 
-    username_dois = "IA"
-    jogador_dois = username_dois
+    if proporcao > 26:
+        letras_temp = []
+        for i in letras_base:
+            for j in letras:
+                letras_temp.append(f"{i}{j}")
+        letras.extend(letras_temp)
 
-proporcao = 0
-while proporcao == 0:
-    try:
-        proporcao_temp = int(input("Insira o numero que voce quer usar de prorporção para o tabuleiro: "))
-        if proporcao_temp < 5:
-            print(f"{color['red']}Proporção deve ser no mínimo 5,{color['reset']} tente novamente!")
-        if proporcao_temp >= 5:
-            proporcao = proporcao_temp
-    except Exception:
-        print(f"{color['red']}A proporção deve ser numérica,{color['reset']} tente novamente!")
+    while continuar != "X":
+        fim = False
+        coordenadas_atacadas = set()
 
-if proporcao > 26:
-    letras_temp = []
-    for i in letras_base:
-        for j in letras:
-            letras_temp.append(f"{i}{j}")
-    letras.extend(letras_temp)
+        navios = [
+            ["Porta-aviões", 5], ["Encouraçado", 4], ["CruzadorUm", 3], ["CruzadorDois", 3], ["SubmarinoUm", 2], ["SubmarinoDois", 2]
+        ]
 
-while continuar != "X":
-    fim = False
-    coordenadas_atacadas = set()
+        coords_navios_um = {
+            "Porta-aviões": [], "Encouraçado": [], "CruzadorUm": [],
+            "CruzadorDois": [], "SubmarinoUm": [], "SubmarinoDois": []
+        }
 
-    navios = [
-        ["Porta-aviões", 5], ["Encouraçado", 4], ["CruzadorUm", 3], ["CruzadorDois", 3], ["SubmarinoUm", 2], ["SubmarinoDois", 2]
-    ]
+        coords_navios_dois = {
+            "Porta-aviões": [], "Encouraçado": [], "CruzadorUm": [],
+            "CruzadorDois": [], "SubmarinoUm": [], "SubmarinoDois": []
+        }
 
-    coords_navios_um = {
-        "Porta-aviões": [], "Encouraçado": [], "CruzadorUm": [],
-        "CruzadorDois": [], "SubmarinoUm": [], "SubmarinoDois": []
-    }
+        placar = {"jogadorUm": {"tiros": 0, "acertos": 0, "navios_abatidos": 0},
+                  "jogadorDois": {"tiros": 0, "acertos": 0, "navios_abatidos": 0}}
 
-    coords_navios_dois = {
-        "Porta-aviões": [], "Encouraçado": [], "CruzadorUm": [],
-        "CruzadorDois": [], "SubmarinoUm": [], "SubmarinoDois": []
-    }
+        placar_ia = {"jogadorUm": {"tiros": 0, "acertos": 0, "navios_abatidos": 0},
+                     "IA": {"tiros": 0, "acertos": 0, "navios_abatidos": 0}}
 
-    placar = {"jogadorUm": {"tiros": 0, "acertos": 0, "navios_abatidos": 0},
-              "jogadorDois": {"tiros": 0, "acertos": 0, "navios_abatidos": 0}}
+        tabuleiro_um = criar_tabuleiro(proporcao, letras)
+        tabuleiro_dois = criar_tabuleiro(proporcao, letras)
+        tabuleiro_ataque_um = criar_tabuleiro(proporcao, letras)
+        tabuleiro_ataque_dois = criar_tabuleiro(proporcao, letras)
+        introducao_jogo(color)
 
-    placar_ia = {"jogadorUm": {"tiros": 0, "acertos": 0, "navios_abatidos": 0},
-                 "IA": {"tiros": 0, "acertos": 0, "navios_abatidos": 0}}
+        for i in range(len(coords_navios_um)):
+            inserir_navios(jogador_um, tabuleiro_um, navios[i][1], navios[i][0], proporcao, linha, coluna, coords_navios_um, letras, color)
 
-    tabuleiro_um = criar_tabuleiro(proporcao, letras)
-    tabuleiro_dois = criar_tabuleiro(proporcao, letras)
-    tabuleiro_ataque_um = criar_tabuleiro(proporcao, letras)
-    tabuleiro_ataque_dois = criar_tabuleiro(proporcao, letras)
-    introducao_jogo()
+        printar_posicionamento_navios(tabuleiro_um, jogador_um, color)
 
-    for i in range(len(coords_navios_um)):
-        inserir_navios(jogador_um, tabuleiro_um, navios[i][1], navios[i][0], proporcao, linha, coluna, coords_navios_um, letras)
-
-    printar_posicionamento_navios(tabuleiro_um, jogador_um)
-
-    if username_dois == "IA":
-        for i in range(len(coords_navios_dois)):
-            inserir_navios_ia(tabuleiro_dois, navios[i][1], proporcao, navios[i][0], coords_navios_dois)
-    else:
-        introducao_jogo()
-        for i in range(len(coords_navios_dois)):
-            inserir_navios(jogador_dois, tabuleiro_dois, navios[i][1], navios[i][0], proporcao, linha, coluna, coords_navios_dois, letras)
-
-        printar_posicionamento_navios(tabuleiro_dois, jogador_dois)
-
-    introducao_batalha()
-
-    while not fim:
         if username_dois == "IA":
-            fim = jogada(tabuleiro_um, tabuleiro_ataque_um, tabuleiro_dois, jogador_dois, jogador_um, coords_navios_dois, proporcao, modo_jogo, placar_ia, letras)
-            if not fim:
-                fim = jogada_ia(tabuleiro_ataque_dois, tabuleiro_um, coordenadas_atacadas, proporcao, coords_navios_um, placar_ia)
+            for i in range(len(coords_navios_dois)):
+                inserir_navios_ia(tabuleiro_dois, navios[i][1], proporcao, navios[i][0], coords_navios_dois)
         else:
-            fim = jogada(tabuleiro_um, tabuleiro_ataque_um, tabuleiro_dois, jogador_dois, jogador_um, coords_navios_dois, proporcao, modo_jogo, placar_ia, letras)
-            if not fim:
-                fim = jogada(tabuleiro_dois, tabuleiro_ataque_dois, tabuleiro_um, jogador_um, jogador_dois, coords_navios_um, proporcao, modo_jogo, placar_ia, letras)
+            introducao_jogo(color)
+            for i in range(len(coords_navios_dois)):
+                inserir_navios(jogador_dois, tabuleiro_dois, navios[i][1], navios[i][0], proporcao, linha, coluna, coords_navios_dois, letras, color)
 
-    print("-" * 20, "Placar final", "-" * 20)
-    if modo_jogo == "1":
-        print(f"Comandante {jogador_um}:\n\tTiros: {placar['jogadorUm']['tiros']}\n\tAcertos: {placar['jogadorUm']['acertos']}\n\tNavios abatidos: {placar['jogadorUm']['navios_abatidos']}")
-        print(f"Comandante {jogador_dois}:\n\tTiros: {placar['jogadorDois']['tiros']}\n\tAcertos: {placar['jogadorDois']['acertos']}\n\tNavios abatidos: {placar['jogadorDois']['navios_abatidos']}")
-    else:
-        print(f"Comandante {jogador_um}:\n\tTiros: {placar_ia['jogadorUm']['tiros']}\n\tAcertos: {placar_ia['jogadorUm']['acertos']}\n\tNavios abatidos: {placar_ia['jogadorUm']['navios_abatidos']}")
-        print(f"IA:\n\tTiros: {placar_ia['IA']['tiros']}\n\tAcertos: {placar_ia['IA']['acertos']}\n\tNavios abatidos: {placar_ia['IA']['navios_abatidos']}")
+            printar_posicionamento_navios(tabuleiro_dois, jogador_dois, color)
 
-    continuar = input(f"pressione{color['yellow']} [ENTER] {color['reset']}para jogar mais uma e insira {color['yellow']}[X]{color['reset']} para parar de jogar: ").upper()
+        introducao_batalha()
+
+        while not fim:
+            if username_dois == "IA":
+                fim = jogada(tabuleiro_um, tabuleiro_ataque_um, tabuleiro_dois, jogador_dois, coords_navios_dois, proporcao, modo_jogo, placar_ia, letras, color, placar, jogador_um)
+                if not fim:
+                    fim = jogada_ia(tabuleiro_ataque_dois, tabuleiro_um, coordenadas_atacadas, proporcao, coords_navios_um, placar_ia, color)
+            else:
+                fim = jogada(tabuleiro_um, tabuleiro_ataque_um, tabuleiro_dois, jogador_dois, coords_navios_dois, proporcao, modo_jogo, placar_ia, letras, color, placar,jogador_um)
+                if not fim:
+                    fim = jogada(tabuleiro_dois, tabuleiro_ataque_dois, tabuleiro_um, jogador_um, coords_navios_um, proporcao, modo_jogo, placar_ia, letras, color, placar, jogador_dois)
+
+        print("-" * 20, "Placar final", "-" * 20)
+        if modo_jogo == "1":
+            print(f"Comandante {jogador_um}:\n\tTiros: {placar['jogadorUm']['tiros']}\n\tAcertos: {placar['jogadorUm']['acertos']}\n\tNavios abatidos: {placar['jogadorUm']['navios_abatidos']}")
+            print(f"Comandante {jogador_dois}:\n\tTiros: {placar['jogadorDois']['tiros']}\n\tAcertos: {placar['jogadorDois']['acertos']}\n\tNavios abatidos: {placar['jogadorDois']['navios_abatidos']}")
+        else:
+            print(f"Comandante {jogador_um}:\n\tTiros: {placar_ia['jogadorUm']['tiros']}\n\tAcertos: {placar_ia['jogadorUm']['acertos']}\n\tNavios abatidos: {placar_ia['jogadorUm']['navios_abatidos']}")
+            print(f"IA:\n\tTiros: {placar_ia['IA']['tiros']}\n\tAcertos: {placar_ia['IA']['acertos']}\n\tNavios abatidos: {placar_ia['IA']['navios_abatidos']}")
+
+        continuar = input(f"pressione{color['yellow']} [ENTER] {color['reset']}para jogar mais uma e insira {color['yellow']}[X]{color['reset']} para parar de jogar: ").upper()
