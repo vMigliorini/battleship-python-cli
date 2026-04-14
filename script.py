@@ -364,18 +364,7 @@ def calcular_proximos_ataques(primeiro_acerto, segundo_acerto, proporcao, sentid
     return proximos_ataques
 
 
-def jogada_ia(tabuleiro_ataque, tabuleiro_atacado, coordenadas_atacadas, proporcao, coords_navios, placar_ia, color):
-    parar_evento = threading.Event()
-    thread_loading = threading.Thread(target=tela_carregando, args=(parar_evento, "esperando a IA fazer seu ataque"))
-    thread_loading.start()
-
-    acerto_aleatorio = getattr(jogada_ia, 'acerto_aleatorio', None)
-    acerto_busca = getattr(jogada_ia, 'acerto_busca', None)
-    modo_atual = getattr(jogada_ia, 'modo_atual', 'aleatorio')
-    proximo_ataque = getattr(jogada_ia, 'proximo_ataque', [[]])
-
-    modos_ataque = ["aleatorio", "busca", "caça"]
-
+def escolher_coords_ataque_ia(modo_atual):
     linha_escolhida = 0
     coluna_escolhida = 0
     atacou = False
@@ -401,6 +390,9 @@ def jogada_ia(tabuleiro_ataque, tabuleiro_atacado, coordenadas_atacadas, proporc
             coordenadas_atacadas.add((linha_escolhida, coluna_escolhida))
             atacou = True
 
+    return linha_escolhida, coluna_escolhida
+
+def aplicar_tiro_ia(modo_atual, proximo_ataque, acerto_aleatorio, acerto_busca):
     celula = tabuleiro_atacado[linha_escolhida][coluna_escolhida]
     if celula == "N":
         tabuleiro_ataque[linha_escolhida][coluna_escolhida] = "X"
@@ -458,6 +450,33 @@ def jogada_ia(tabuleiro_ataque, tabuleiro_atacado, coordenadas_atacadas, proporc
     jogada_ia.modo_atual = modo_atual
     jogada_ia.proximo_ataque = proximo_ataque
 
+def verificar_fim_de_jogo_ia():
+    if not any("N" in linha for linha in tabuleiro_atacado):
+        #time.sleep(2)
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print(f"A IA acabou com você!")
+        print(f"Vitoria da IA!!!")
+        return True
+    return False
+
+
+def jogada_ia(tabuleiro_ataque, tabuleiro_atacado, coordenadas_atacadas, proporcao, coords_navios, placar_ia, color):
+    parar_evento = threading.Event()
+    thread_loading = threading.Thread(target=tela_carregando, args=(parar_evento, "esperando a IA fazer seu ataque"))
+    thread_loading.start()
+
+    acerto_aleatorio = getattr(jogada_ia, 'acerto_aleatorio', None)
+    acerto_busca = getattr(jogada_ia, 'acerto_busca', None)
+    modo_atual = getattr(jogada_ia, 'modo_atual', 'aleatorio')
+    proximo_ataque = getattr(jogada_ia, 'proximo_ataque', [[]])
+
+    modos_ataque = ["aleatorio", "busca", "caça"]
+
+    coord_ataque = escolher_coords_ataque_ia(modo_atual)
+    linha_escolhida = coord_ataque[0]
+    coluna_escolhida = coord_ataque[1]
+
+
     if verificar_navio_abatido(coords_navios, tabuleiro_atacado):
         placar_ia["IA"]["navios_abatidos"] += 1
 
@@ -472,14 +491,7 @@ def jogada_ia(tabuleiro_ataque, tabuleiro_atacado, coordenadas_atacadas, proporc
     #time.sleep(1)
     os.system('cls' if os.name == 'nt' else 'clear')
 
-    if not any("N" in linha for linha in tabuleiro_atacado):
-        #time.sleep(2)
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print(f"A IA acabou com você!")
-        print(f"Vitoria da IA!!!")
-        return True
-    return False
-
+    verificar_fim_de_jogo_ia()
 
 def tela_carregando(parar_evento, frase):
     pontos = [".", "..", "..."]
