@@ -1,6 +1,6 @@
 ![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-inconcluído-yellow)
+![Status](https://img.shields.io/badge/status-concluído-emeraldgreen)
 
 # battleship-python-cli
 
