@@ -320,7 +320,7 @@ def verificar_fim_de_jogo(tabuleiro_atacado, jogador_atacado, jogador):
         return True
     return False
 
-def jogada(tabuleiro, tabuleiro_ataque, tabuleiro_atacado, jogador_atacado, coords_navios, proporcao, modo_jogo, placar_ia, letras, color, placar, jogador):
+def jogada(tabuleiro, tabuleiro_ataque, tabuleiro_atacado, jogador_atacado, coords_navios, proporcao, modo_jogo, placar_ia, letras, color, placar, jogador, chave_placar):
     print(f"           Tabuleiro com seus navios, comandante {jogador}")
     printar_tabuleiro(tabuleiro, color)
     print(f"           Tabuleiro de ataque")
@@ -328,8 +328,6 @@ def jogada(tabuleiro, tabuleiro_ataque, tabuleiro_atacado, jogador_atacado, coor
     print()
     print(f"\t{color['red']}ATENÇÃO{color['reset']}\n\tA letra {color['green']}N{color['reset']} representa as partes do navio que não foram atingidas \n\tA letra {color['red']}X{color['reset']} representa acertos nos navios\n\tA letra {color['yellow']}O{color['reset']} representa acertos na água")
 
-
-    chave_placar = jogador
 
     tupla_coordenadas = validar_coordenada(color, letras, proporcao)
 
@@ -375,7 +373,7 @@ def calcular_proximos_ataques(primeiro_acerto, segundo_acerto, proporcao, sentid
 
         if proximos_ataques == [[]]:
             sentido = "S"
-            calcular_proximos_ataques(primeiro_acerto, segundo_acerto, sentido)
+            return calcular_proximos_ataques(primeiro_acerto, segundo_acerto, proporcao, sentido)
 
     elif primeiro_acerto[0] < segundo_acerto[0] and (sentido == "" or sentido == "S"):
         sentido = "S"
@@ -389,7 +387,7 @@ def calcular_proximos_ataques(primeiro_acerto, segundo_acerto, proporcao, sentid
 
         if proximos_ataques == [[]]:
             sentido = "N"
-            calcular_proximos_ataques(primeiro_acerto, segundo_acerto, sentido)
+            return calcular_proximos_ataques(primeiro_acerto, segundo_acerto, proporcao, sentido)
 
     if primeiro_acerto[1] > segundo_acerto[1] and (sentido == "" or sentido == "O"):
         sentido = "O"
@@ -403,7 +401,7 @@ def calcular_proximos_ataques(primeiro_acerto, segundo_acerto, proporcao, sentid
 
         if proximos_ataques == [[]]:
             sentido = "L"
-            calcular_proximos_ataques(primeiro_acerto, segundo_acerto, sentido)
+            return calcular_proximos_ataques(primeiro_acerto, segundo_acerto, proporcao, sentido)
 
     elif primeiro_acerto[1] < segundo_acerto[1] and (sentido == "" or sentido == "L"):
         sentido = "L"
@@ -417,7 +415,7 @@ def calcular_proximos_ataques(primeiro_acerto, segundo_acerto, proporcao, sentid
 
         if proximos_ataques == [[]]:
             sentido = "O"
-            calcular_proximos_ataques(primeiro_acerto, segundo_acerto, sentido)
+            return calcular_proximos_ataques(primeiro_acerto, segundo_acerto, proporcao, sentido)
 
     return proximos_ataques
 
@@ -434,7 +432,7 @@ def escolher_coords_ataque_ia(modo_atual, proporcao, proximo_ataque, coordenadas
         elif modo_atual in ["busca", "caça"]:
             if not proximo_ataque or proximo_ataque == [[]]:
                 modo_atual = "aleatorio"
-                jogada_ia.modo_atual = modo_atual
+                # jogada_ia.modo_atual = modo_atual
                 continue
             linha_escolhida = proximo_ataque[0][0]
             coluna_escolhida = proximo_ataque[0][1]
@@ -447,7 +445,7 @@ def escolher_coords_ataque_ia(modo_atual, proporcao, proximo_ataque, coordenadas
             coordenadas_atacadas.add((linha_escolhida, coluna_escolhida))
             atacou = True
 
-    return linha_escolhida, coluna_escolhida
+    return linha_escolhida, coluna_escolhida, modo_atual
 
 def aplicar_tiro_ia(modo_atual, proximo_ataque, modos_ataque, coordenadas_atacadas, coords_navios, acerto_aleatorio, proporcao, acerto_busca, tabuleiro_atacado, linha_escolhida, coluna_escolhida, tabuleiro_ataque, placar_ia):
     celula = tabuleiro_atacado[linha_escolhida][coluna_escolhida]
@@ -528,14 +526,18 @@ def jogada_ia(tabuleiro_ataque, tabuleiro_atacado, coordenadas_atacadas, proporc
 
     modos_ataque = ["aleatorio", "busca", "caça"]
 
-    coord_ataque = escolher_coords_ataque_ia(modo_atual, proporcao, proximo_ataque, coordenadas_atacadas)
-    linha_escolhida = coord_ataque[0]
-    coluna_escolhida = coord_ataque[1]
+    coord_ataque_e_modo_jogo = escolher_coords_ataque_ia(modo_atual, proporcao, proximo_ataque, coordenadas_atacadas)
+    linha_escolhida = coord_ataque_e_modo_jogo[0]
+    coluna_escolhida = coord_ataque_e_modo_jogo[1]
+    modo_atual = coord_ataque_e_modo_jogo[2]
+    jogada_ia.modo_atual = modo_atual
 
     aplicar_tiro_ia(modo_atual, proximo_ataque, modos_ataque, coordenadas_atacadas, coords_navios, acerto_aleatorio, proporcao, acerto_busca, tabuleiro_atacado, linha_escolhida, coluna_escolhida, tabuleiro_ataque, placar_ia)
 
-    if verificar_navio_abatido(coords_navios, tabuleiro_atacado):
-        placar_ia["IA"]["navios_abatidos"] += 1
+    placar_ia["IA"]["navios_abatidos"] = sum(
+        1 for coords in coords_navios.values()
+        if coords and all(tabuleiro_atacado[c[0]][c[1]] == "X" for c in coords)
+    )
 
     #time.sleep(1.5)
     parar_evento.set()
@@ -588,11 +590,11 @@ def definir_proporcao_tabuleiro(color, letras_base, letras):
     if proporcao > 26:
         letras_temp = []
         for i in letras_base:
-            for j in letras:
+            for j in letras_base:
                 letras_temp.append(f"{i}{j}")
         letras.extend(letras_temp)
 
-    return proporcao
+    return proporcao, letras
 
 def escolher_modo_jogo(color):
     modo_jogo = input(
@@ -649,9 +651,16 @@ def main():
     jogador_um = nomes_jogadores[0]
     jogador_dois = nomes_jogadores[1]
 
-    proporcao = definir_proporcao_tabuleiro(color, letras_base, letras)
+    proporcao_letras = definir_proporcao_tabuleiro(color, letras_base, letras)
+    proporcao = proporcao_letras[0]
+    letras = proporcao_letras[1]
 
     while continuar != "X":
+        jogada_ia.modo_atual = "aleatorio"
+        jogada_ia.acerto_aleatorio = None
+        jogada_ia.acerto_busca = None
+        jogada_ia.proximo_ataque = [[]]
+
         fim = False
         coordenadas_atacadas = set()
 
@@ -700,13 +709,13 @@ def main():
 
         while not fim:
             if username_dois == "IA":
-                fim = jogada(tabuleiro_um, tabuleiro_ataque_um, tabuleiro_dois, jogador_dois, coords_navios_dois, proporcao, modo_jogo, placar_ia, letras, color, placar, jogador_um)
+                fim = jogada(tabuleiro_um, tabuleiro_ataque_um, tabuleiro_dois, jogador_dois, coords_navios_dois, proporcao, modo_jogo, placar_ia, letras, color, placar, jogador_um, "jogadorUm")
                 if not fim:
                     fim = jogada_ia(tabuleiro_ataque_dois, tabuleiro_um, coordenadas_atacadas, proporcao, coords_navios_um, placar_ia, color)
             else:
-                fim = jogada(tabuleiro_um, tabuleiro_ataque_um, tabuleiro_dois, jogador_dois, coords_navios_dois, proporcao, modo_jogo, placar_ia, letras, color, placar,jogador_um)
+                fim = jogada(tabuleiro_um, tabuleiro_ataque_um, tabuleiro_dois, jogador_dois, coords_navios_dois, proporcao, modo_jogo, placar_ia, letras, color, placar,jogador_um, "jogadorUm")
                 if not fim:
-                    fim = jogada(tabuleiro_dois, tabuleiro_ataque_dois, tabuleiro_um, jogador_um, coords_navios_um, proporcao, modo_jogo, placar_ia, letras, color, placar, jogador_dois)
+                    fim = jogada(tabuleiro_dois, tabuleiro_ataque_dois, tabuleiro_um, jogador_um, coords_navios_um, proporcao, modo_jogo, placar_ia, letras, color, placar, jogador_dois, "jogadorDois")
 
         print("-" * 20, "Placar final", "-" * 20)
         if modo_jogo == "1":
