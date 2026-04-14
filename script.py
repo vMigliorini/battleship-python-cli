@@ -575,10 +575,13 @@ def definir_proporcao_tabuleiro(color, letras_base, letras):
     while proporcao == 0:
         try:
             proporcao_temp = int(input("Insira o numero que voce quer usar de prorporção para o tabuleiro: "))
+            if proporcao_temp > 50:
+                print(f"{color['red']}Proporção deve ser no máximo 50,{color['reset']} tente novamente!")
             if proporcao_temp < 5:
                 print(f"{color['red']}Proporção deve ser no mínimo 5,{color['reset']} tente novamente!")
-            if proporcao_temp >= 5:
+            if 5 <= proporcao_temp <= 50:
                 proporcao = proporcao_temp
+
         except Exception:
             print(f"{color['red']}A proporção deve ser numérica,{color['reset']} tente novamente!")
 
@@ -619,9 +622,9 @@ def inserir_nome_jogadores(modo_jogo, username_um, username_dois):
             if username_um == "":
                 print("Erro: Você deve inserir um username!")
                 continue
+        username_dois = "IA"
 
     return username_um, username_dois
-
 
 def main():
     init()
