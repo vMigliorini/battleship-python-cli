@@ -3,7 +3,6 @@ import random
 import re
 import os
 import threading
-from operator import truediv
 
 from colorama import Fore, init
 
@@ -47,70 +46,115 @@ def printar_tabuleiro(tabuleiro, color):
         print()
 
 
-def inserir_navios(jogador, tabuleiro, tamanho_navio, nome_navio, proporcao, linha, coluna, coords_navios, letras, color):
+def validar_coordenada_insercao(color, letras, proporcao, nome_navio):
+    match = None
+    linha = 0
+    coluna = 0
+
+    while match is None:
+        coordenada_navio = input(
+            f"insira a coordenada {color['yellow']}(numero)(letra){color['reset']} do {nome_navio}: ").upper().replace(
+            " ", "")
+        match = re.match(r"(\d+)([A-Z]+)", coordenada_navio)
+
+        if match is None:
+            print(f"{color['red']}Coordenada inválida,{color['reset']} Tente novamente!")
+            continue
+        linha_temp = int(match.group(1))
+        coluna_temp = letras.index(match.group(2))
+        if linha_temp > proporcao or coluna_temp > proporcao:
+            print(f"{color['red']}Coordenadas fora do alcance do tabuleiro{color['reset']}, tente novamente!")
+            match = None
+        else:
+            linha = int(match.group(1))
+            coluna = letras.index(match.group(2))
+
+    return linha, coluna
+
+def validar_direcao(color):
+    direcao = ""
+    while direcao not in ["H", "V"]:
+        direcao = input(
+            f"Insira{color['yellow']} V{color['reset']} para colocar o navio na vertical e {color['yellow']}H{color['reset']} para colocar na horizontal: ").upper().strip()
+
+        if direcao not in ["H", "V"]:
+            print(f"{color['red']}Direção inválida,{color['reset']} Tente novamente!")
+    return direcao
+
+def verificar_disponibilidade_de_coords_horizontal(coluna, tamanho_navio, proporcao, color, tabuleiro, linha):
+    if coluna + tamanho_navio - 1 > proporcao:
+        print(f"{color['red']}O navio não cabe na horizontal,{color['reset']} Tente novamente!")
+        return False
+
+    if any(tabuleiro[linha][coluna + i] != "~" for i in range(tamanho_navio)):
+        print(f"{color['red']}Posição já ocupada,{color['reset']} Tente novamente!")
+        return False
+
+    return True
+
+def verificar_disponibilidade_de_coords_vertical(linha, tamanho_navio, proporcao, color, tabuleiro, coluna):
+    if linha + tamanho_navio - 1 > proporcao:
+        print(f"{color['red']}Navio não cabe na vertical,{color['reset']} Tente novamente!")
+        return False
+
+    if any(tabuleiro[linha + i][coluna] != "~" for i in range(tamanho_navio)):
+        print(f"{color['red']}Posição já ocupada,{color['reset']} Tente novamente!")
+        return False
+
+    return True
+
+def inserir_navios(linha, coluna, tamanho_navio, color, proporcao, tabuleiro, coords_navios, nome_navio):
+
+    direcao = validar_direcao(color)
+
+    if direcao == "H":
+
+        disponivel = verificar_disponibilidade_de_coords_horizontal(coluna, tamanho_navio, proporcao, color, tabuleiro, linha)
+
+        if not disponivel:
+            return False
+
+        coords = []
+        for i in range(tamanho_navio):
+            tabuleiro[linha][coluna + i] = "N"
+            coords.append((linha, coluna + i))
+        coords_navios[nome_navio] = coords
+        return True
+
+    elif direcao == "V":
+
+        disponivel = verificar_disponibilidade_de_coords_vertical(linha, tamanho_navio, proporcao, color, tabuleiro, coluna)
+
+        if not disponivel:
+            return False
+
+        coords = []
+        for i in range(tamanho_navio):
+            tabuleiro[linha + i][coluna] = "N"
+            coords.append((linha + i, coluna))
+        coords_navios[nome_navio] = coords
+        return True
+
+
+    return False
+
+
+def posicionar_navios(jogador, tabuleiro, tamanho_navio, nome_navio, proporcao, coords_navios, letras, color):
+
     posicionou_navio = False
     while not posicionou_navio:
         try:
+
             print(f"           Tabuleiro do {jogador}")
             printar_tabuleiro(tabuleiro, color)
             print()
             print(f"As coordenadas que você colocar serão a {color['yellow']}ponta esquerda{color['reset']} do navio. O resto dele será {color['yellow']}colocado abaixo ou à direita{color['reset']} dessa coordenada.")
-            match = None
 
-            while match is None:
-                coordenada_navio = input(f"insira a coordenada {color['yellow']}(numero)(letra){color['reset']} do {nome_navio}: ").upper().replace(" ", "")
-                match = re.match(r"(\d+)([A-Z]+)", coordenada_navio)
+            coords_insercao_navios = validar_coordenada_insercao(color, letras, proporcao, nome_navio)
+            linha = coords_insercao_navios[0]
+            coluna = coords_insercao_navios[1]
 
-                if match is None:
-                    print(f"{color['red']}Coordenada inválida,{color['reset']} Tente novamente!")
-                    continue
-                linha_temp = int(match.group(1))
-                coluna_temp = letras.index(match.group(2))
-                if linha_temp > proporcao or coluna_temp > proporcao:
-                    print(f"{color['red']}Coordenadas fora do alcance do tabuleiro{color['reset']}, tente novamente!")
-                    match = None
-                else:
-                    linha = int(match.group(1))
-                    coluna = letras.index(match.group(2))
-
-            direcao = ""
-            while direcao not in ["H", "V"]:
-                direcao = input(f"Insira{color['yellow']} V{color['reset']} para colocar o navio na vertical e {color['yellow']}H{color['reset']} para colocar na horizontal: ").upper().strip()
-
-                if direcao not in ["H", "V"]:
-                    print(f"{color['red']}Direção inválida,{color['reset']} Tente novamente!")
-
-            if direcao == "H":
-                if coluna + tamanho_navio - 1 > proporcao:
-                    print(f"{color['red']}O navio não cabe na horizontal,{color['reset']} Tente novamente!")
-                    continue
-
-                if any(tabuleiro[linha][coluna + i] != "~" for i in range(tamanho_navio)):
-                    print(f"{color['red']}Posição já ocupada,{color['reset']} Tente novamente!")
-                    continue
-
-                coords = []
-                for i in range(tamanho_navio):
-                    tabuleiro[linha][coluna + i] = "N"
-                    coords.append((linha, coluna + i))
-                coords_navios[nome_navio] = coords
-                posicionou_navio = True
-
-            elif direcao == "V":
-                if linha + tamanho_navio - 1 > proporcao:
-                    print(f"{color['red']}Navio não cabe na vertical,{color['reset']} Tente novamente!")
-                    continue
-
-                if any(tabuleiro[linha + i][coluna] != "~" for i in range(tamanho_navio)):
-                    print(f"{color['red']}Posição já ocupada,{color['reset']} Tente novamente!")
-                    continue
-
-                coords = []
-                for i in range(tamanho_navio):
-                    tabuleiro[linha + i][coluna] = "N"
-                    coords.append((linha + i, coluna))
-                coords_navios[nome_navio] = coords
-                posicionou_navio = True
+            posicionou_navio = inserir_navios(linha, coluna, tamanho_navio, color, proporcao, tabuleiro, coords_navios, nome_navio)
 
         except (ValueError, IndexError):
             print(f"{color['red']}Coordenada inválida,{color['reset']} Tente novamente.")
@@ -192,6 +236,8 @@ def introducao_batalha():
 
 def validar_coordenada(color, letras, proporcao):
     match = None
+    linha_final = 0
+    coluna_final = 0
     while match is None:
         coordenada_ataque = input(
             f"Insira a coordenada {color['yellow']}(numero)(letra){color['reset']} do seu ataque: ").upper().replace(
@@ -213,7 +259,8 @@ def validar_coordenada(color, letras, proporcao):
             else:
                 linha_final = int(match.group(1))
                 coluna_final = letras.index(match.group(2))
-                return linha_final, coluna_final
+    return linha_final, coluna_final
+
 
 def atualizar_placar(coords_navios, tabuleiro_atacado, modo_jogo, placar, chave_placar, placar_ia):
     navios_afundados = sum(
@@ -364,7 +411,7 @@ def calcular_proximos_ataques(primeiro_acerto, segundo_acerto, proporcao, sentid
     return proximos_ataques
 
 
-def escolher_coords_ataque_ia(modo_atual):
+def escolher_coords_ataque_ia(modo_atual, proporcao, proximo_ataque, coordenadas_atacadas):
     linha_escolhida = 0
     coluna_escolhida = 0
     atacou = False
@@ -392,7 +439,7 @@ def escolher_coords_ataque_ia(modo_atual):
 
     return linha_escolhida, coluna_escolhida
 
-def aplicar_tiro_ia(modo_atual, proximo_ataque, acerto_aleatorio, acerto_busca):
+def aplicar_tiro_ia(modo_atual, proximo_ataque, modos_ataque, coordenadas_atacadas, coords_navios, acerto_aleatorio, proporcao, acerto_busca, tabuleiro_atacado, linha_escolhida, coluna_escolhida, tabuleiro_ataque, placar_ia):
     celula = tabuleiro_atacado[linha_escolhida][coluna_escolhida]
     if celula == "N":
         tabuleiro_ataque[linha_escolhida][coluna_escolhida] = "X"
@@ -450,7 +497,7 @@ def aplicar_tiro_ia(modo_atual, proximo_ataque, acerto_aleatorio, acerto_busca):
     jogada_ia.modo_atual = modo_atual
     jogada_ia.proximo_ataque = proximo_ataque
 
-def verificar_fim_de_jogo_ia():
+def verificar_fim_de_jogo_ia(tabuleiro_atacado):
     if not any("N" in linha for linha in tabuleiro_atacado):
         #time.sleep(2)
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -472,10 +519,11 @@ def jogada_ia(tabuleiro_ataque, tabuleiro_atacado, coordenadas_atacadas, proporc
 
     modos_ataque = ["aleatorio", "busca", "caça"]
 
-    coord_ataque = escolher_coords_ataque_ia(modo_atual)
+    coord_ataque = escolher_coords_ataque_ia(modo_atual, proporcao, proximo_ataque, coordenadas_atacadas)
     linha_escolhida = coord_ataque[0]
     coluna_escolhida = coord_ataque[1]
 
+    aplicar_tiro_ia(modo_atual, proximo_ataque, modos_ataque, coordenadas_atacadas, coords_navios, acerto_aleatorio, proporcao, acerto_busca, tabuleiro_atacado, linha_escolhida, coluna_escolhida, tabuleiro_ataque, placar_ia)
 
     if verificar_navio_abatido(coords_navios, tabuleiro_atacado):
         placar_ia["IA"]["navios_abatidos"] += 1
@@ -491,7 +539,8 @@ def jogada_ia(tabuleiro_ataque, tabuleiro_atacado, coordenadas_atacadas, proporc
     #time.sleep(1)
     os.system('cls' if os.name == 'nt' else 'clear')
 
-    verificar_fim_de_jogo_ia()
+    fim = verificar_fim_de_jogo_ia(tabuleiro_atacado)
+    return fim
 
 def tela_carregando(parar_evento, frase):
     pontos = [".", "..", "..."]
@@ -611,7 +660,7 @@ def main():
         introducao_jogo(color)
 
         for i in range(len(coords_navios_um)):
-            inserir_navios(jogador_um, tabuleiro_um, navios[i][1], navios[i][0], proporcao, linha, coluna, coords_navios_um, letras, color)
+            posicionar_navios(jogador_um, tabuleiro_um, navios[i][1], navios[i][0], proporcao, coords_navios_um, letras, color)
 
         printar_posicionamento_navios(tabuleiro_um, jogador_um, color)
 
@@ -621,7 +670,7 @@ def main():
         else:
             introducao_jogo(color)
             for i in range(len(coords_navios_dois)):
-                inserir_navios(jogador_dois, tabuleiro_dois, navios[i][1], navios[i][0], proporcao, linha, coluna, coords_navios_dois, letras, color)
+                posicionar_navios(jogador_dois, tabuleiro_dois, navios[i][1], navios[i][0], proporcao, coords_navios_dois, letras, color)
 
             printar_posicionamento_navios(tabuleiro_dois, jogador_dois, color)
 
@@ -646,3 +695,5 @@ def main():
             print(f"IA:\n\tTiros: {placar_ia['IA']['tiros']}\n\tAcertos: {placar_ia['IA']['acertos']}\n\tNavios abatidos: {placar_ia['IA']['navios_abatidos']}")
 
         continuar = input(f"pressione{color['yellow']} [ENTER] {color['reset']}para jogar mais uma e insira {color['yellow']}[X]{color['reset']} para parar de jogar: ").upper()
+
+main()
