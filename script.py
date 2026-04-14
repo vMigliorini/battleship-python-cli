@@ -570,54 +570,7 @@ def printar_posicionamento_navios(tabuleiro, jogador, color):
     #time.sleep(2)
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def main():
-    init()
-    color = {
-        'blue': Fore.BLUE,
-        'green': Fore.GREEN,
-        'red': Fore.RED,
-        'yellow': Fore.YELLOW,
-        'reset': Fore.RESET
-    }
-
-    letras = [" "] + list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-    letras_base = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-    linha = 0
-    coluna = 0
-    proporcao = 0
-    continuar = ""
-    jogador_um = ""
-    jogador_dois = ""
-    username_um = ""
-    username_dois = ""
-
-    modo_jogo = input(f"Insira {color['yellow']}[1]{color['reset']} se voce quer jogar contra um adversário local ou digite {color['yellow']}[2]{color['reset']} se voce quer jogar contra IA: ")
-
-    while modo_jogo != "1" and modo_jogo != "2":
-        print(f"{color['red']}Erro, tente novamente!{color['reset']} Dessa vez tente usar, apenas 1 ou 2 para seguir com as escolhas.")
-        modo_jogo = input(f"insira {color['yellow']}[1]{color['reset']} se voce quer jogar contra um adversário local ou digite {color['yellow']}[2]{color['reset']} se voce quer jogar contra IA: ")
-
-    if modo_jogo == "1":
-        while username_um == "" or username_dois == "":
-            username_um = input("Jogador 1, insira seu nome: ")
-            username_dois = input("Jogador 2, insira seu nome: ")
-            if username_um == "" or username_dois == "":
-                print("Erro: Você deve inserir um username para cada jogador!")
-                continue
-            jogador_um = username_um
-            jogador_dois = username_dois
-
-    elif modo_jogo == "2":
-        while username_um == "":
-            username_um = input("Insira seu username: ")
-            if username_um == "":
-                print("Erro: Você deve inserir um username!")
-                continue
-            jogador_um = username_um
-
-        username_dois = "IA"
-        jogador_dois = username_dois
-
+def definir_proporcao_tabuleiro(color, letras_base, letras):
     proporcao = 0
     while proporcao == 0:
         try:
@@ -635,6 +588,65 @@ def main():
             for j in letras:
                 letras_temp.append(f"{i}{j}")
         letras.extend(letras_temp)
+
+    return proporcao
+
+def escolher_modo_jogo(color):
+    modo_jogo = input(
+        f"Insira {color['yellow']}[1]{color['reset']} se voce quer jogar contra um adversário local ou digite {color['yellow']}[2]{color['reset']} se voce quer jogar contra IA: ")
+
+    while modo_jogo != "1" and modo_jogo != "2":
+        print(
+            f"{color['red']}Erro, tente novamente!{color['reset']} Dessa vez tente usar, apenas 1 ou 2 para seguir com as escolhas.")
+        modo_jogo = input(
+            f"insira {color['yellow']}[1]{color['reset']} se voce quer jogar contra um adversário local ou digite {color['yellow']}[2]{color['reset']} se voce quer jogar contra IA: ")
+
+    return modo_jogo
+
+def inserir_nome_jogadores(modo_jogo, username_um, username_dois):
+    if modo_jogo == "1":
+        while username_um == "" or username_dois == "":
+            username_um = input("Jogador 1, insira seu nome: ")
+            username_dois = input("Jogador 2, insira seu nome: ")
+            if username_um == "" or username_dois == "":
+                print("Erro: Você deve inserir um username para cada jogador!")
+                continue
+
+
+    elif modo_jogo == "2":
+        while username_um == "":
+            username_um = input("Insira seu username: ")
+            if username_um == "":
+                print("Erro: Você deve inserir um username!")
+                continue
+
+    return username_um, username_dois
+
+
+def main():
+    init()
+    color = {
+        'blue': Fore.BLUE,
+        'green': Fore.GREEN,
+        'red': Fore.RED,
+        'yellow': Fore.YELLOW,
+        'reset': Fore.RESET
+    }
+
+    letras = [" "] + list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    letras_base = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    continuar = ""
+    username_um = ""
+    username_dois = ""
+
+    modo_jogo = escolher_modo_jogo(color)
+
+    nomes_jogadores = inserir_nome_jogadores(modo_jogo, username_um, username_dois)
+
+    jogador_um = nomes_jogadores[0]
+    jogador_dois = nomes_jogadores[1]
+
+    proporcao = definir_proporcao_tabuleiro(color, letras_base, letras)
 
     while continuar != "X":
         fim = False
