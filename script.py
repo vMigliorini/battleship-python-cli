@@ -3,7 +3,6 @@ import random
 import re
 import os
 import threading
-
 from colorama import Fore, init
 
 
@@ -12,7 +11,6 @@ def verificar_navio_abatido(coords_navios, tabuleiro_atacado):
         if coords and all(tabuleiro_atacado[c[0]][c[1]] == "X" for c in coords):
             return True
     return False
-
 
 def criar_tabuleiro(n1, letras):
     tabuleiro = [[" " for _ in range(n1 + 1)] for _ in range(n1 + 1)]
@@ -24,7 +22,6 @@ def criar_tabuleiro(n1, letras):
         for j in range(1, n1 + 1):
             tabuleiro[i][j] = "~"
     return tabuleiro
-
 
 def printar_tabuleiro(tabuleiro, color):
     for i in range(len(tabuleiro)):
@@ -44,7 +41,6 @@ def printar_tabuleiro(tabuleiro, color):
             else:
                 print(f"{tabuleiro[i][j]:3}", end=" ")
         print()
-
 
 def validar_coordenada_insercao(color, letras, proporcao, nome_navio):
     match = None
@@ -138,7 +134,6 @@ def inserir_navios(linha, coluna, tamanho_navio, color, proporcao, tabuleiro, co
 
     return False
 
-
 def posicionar_navios(jogador, tabuleiro, tamanho_navio, nome_navio, proporcao, coords_navios, letras, color):
 
     posicionou_navio = False
@@ -160,7 +155,6 @@ def posicionar_navios(jogador, tabuleiro, tamanho_navio, nome_navio, proporcao, 
             print(f"{color['red']}Coordenada inválida,{color['reset']} Tente novamente.")
             continue
 
-
 def introducao_jogo(color):
     print("\n" + "=" * 50)
     print("🛳🌊 BEM-VINDO AO JOGO BATALHA NAVAL 🌊🛳")
@@ -176,6 +170,37 @@ def introducao_jogo(color):
     print(f"{color['green']}Navios{color['reset']}:\n\t1 porta-aviões {color['yellow']}(5 espaços){color['reset']}\n\t1 Encouraçado {color['yellow']} (4 espaços){color['reset']}\n\t2 Cruzador {color['yellow']}    (3 espaços){color['reset']}\n\t2 Submarino {color['yellow']}  (2 espaços){color['reset']}")
     print()
 
+def validar_coords_insercao_horizontal_ia(coluna, tamanho_navio, proporcao, tabuleiro, linha):
+    if coluna + tamanho_navio - 1 > proporcao:
+        return False
+
+    if any(tabuleiro[linha][coluna + i] != "~" for i in range(tamanho_navio)):
+        return False
+
+    return True
+
+def validar_coordes_insercao_vertical_ia(linha, tamanho_navio, proporcao, tabuleiro, coluna):
+    if linha + tamanho_navio - 1 > proporcao:
+        return False
+
+    if any(tabuleiro[linha + i][coluna] != "~" for i in range(tamanho_navio)):
+        return False
+
+    return True
+
+def aplicar_navios_horizontal_tabuleiro(tamanho_navio,tabuleiro, linha, coluna, coords, coords_navios, nome_navio):
+    for i in range(tamanho_navio):
+        tabuleiro[linha][coluna + i] = "N"
+        coords.append((linha, coluna + i))
+    coords_navios[nome_navio] = coords
+    return True
+
+def aplicar_navios_vertical_tabuleiro(tamanho_navio,tabuleiro, linha, coluna, coords, coords_navios, nome_navio):
+    for i in range(tamanho_navio):
+        tabuleiro[linha + i][coluna] = "N"
+        coords.append((linha + i, coluna))
+    coords_navios[nome_navio] = coords
+    return True
 
 def inserir_navios_ia(tabuleiro, tamanho_navio, proporcao, nome_navio, coords_navios):
     posicionou_navio = False
@@ -185,32 +210,22 @@ def inserir_navios_ia(tabuleiro, tamanho_navio, proporcao, nome_navio, coords_na
         direcao = random.choice(["V", "H"])
         if direcao == "H":
             coords = []
-            if coluna + tamanho_navio - 1 > proporcao:
+
+            coordenadas_livres = validar_coords_insercao_horizontal_ia(coluna, tamanho_navio, proporcao, tabuleiro, linha)
+
+            if not coordenadas_livres:
                 continue
 
-            if any(tabuleiro[linha][coluna + i] != "~" for i in range(tamanho_navio)):
-                continue
-
-            for i in range(tamanho_navio):
-                tabuleiro[linha][coluna + i] = "N"
-                coords.append((linha, coluna + i))
-            coords_navios[nome_navio] = coords
-            posicionou_navio = True
+            posicionou_navio = aplicar_navios_horizontal_tabuleiro(tamanho_navio,tabuleiro, linha, coluna, coords, coords_navios, nome_navio)
 
         elif direcao == "V":
             coords = []
-            if linha + tamanho_navio - 1 > proporcao:
+
+            coordenadas_livres = validar_coordes_insercao_vertical_ia(linha, tamanho_navio, proporcao, tabuleiro, coluna)
+            if not coordenadas_livres:
                 continue
 
-            if any(tabuleiro[linha + i][coluna] != "~" for i in range(tamanho_navio)):
-                continue
-
-            for i in range(tamanho_navio):
-                tabuleiro[linha + i][coluna] = "N"
-                coords.append((linha + i, coluna))
-            coords_navios[nome_navio] = coords
-            posicionou_navio = True
-
+            posicionou_navio = aplicar_navios_vertical_tabuleiro(tamanho_navio,tabuleiro, linha, coluna, coords, coords_navios, nome_navio)
 
 def introducao_batalha():
     print("\n" + "=" * 60)
@@ -232,7 +247,6 @@ def introducao_batalha():
             ^^^^    ^^^^   ^^^   ^^
                   ^^^^   ^^^
     """)
-
 
 def validar_coordenada(color, letras, proporcao):
     match = None
@@ -260,7 +274,6 @@ def validar_coordenada(color, letras, proporcao):
                 linha_final = int(match.group(1))
                 coluna_final = letras.index(match.group(2))
     return linha_final, coluna_final
-
 
 def atualizar_placar(coords_navios, tabuleiro_atacado, modo_jogo, placar, chave_placar, placar_ia):
     navios_afundados = sum(
@@ -340,14 +353,12 @@ def jogada(tabuleiro, tabuleiro_ataque, tabuleiro_atacado, jogador_atacado, coor
         return True
     return False
 
-
 def filtrar_coordenadas_validas(lista_coordenadas, proporcao):
     for i in range(len(lista_coordenadas) - 1, -1, -1):
         if (lista_coordenadas[i][0] > proporcao or lista_coordenadas[i][0] < 1 or
                 lista_coordenadas[i][1] > proporcao or lista_coordenadas[i][1] < 1):
             lista_coordenadas.pop(i)
     return lista_coordenadas
-
 
 def calcular_proximos_ataques(primeiro_acerto, segundo_acerto, proporcao, sentido=""):
     proximos_ataques = [[]]
@@ -409,7 +420,6 @@ def calcular_proximos_ataques(primeiro_acerto, segundo_acerto, proporcao, sentid
             calcular_proximos_ataques(primeiro_acerto, segundo_acerto, sentido)
 
     return proximos_ataques
-
 
 def escolher_coords_ataque_ia(modo_atual, proporcao, proximo_ataque, coordenadas_atacadas):
     linha_escolhida = 0
@@ -506,7 +516,6 @@ def verificar_fim_de_jogo_ia(tabuleiro_atacado):
         return True
     return False
 
-
 def jogada_ia(tabuleiro_ataque, tabuleiro_atacado, coordenadas_atacadas, proporcao, coords_navios, placar_ia, color):
     parar_evento = threading.Event()
     thread_loading = threading.Thread(target=tela_carregando, args=(parar_evento, "esperando a IA fazer seu ataque"))
@@ -550,7 +559,6 @@ def tela_carregando(parar_evento, frase):
             print(f"{frase}{i}")
             #time.sleep(0.25)
 
-
 def printar_posicionamento_navios(tabuleiro, jogador, color):
     print()
     printar_tabuleiro(tabuleiro, color)
@@ -561,7 +569,6 @@ def printar_posicionamento_navios(tabuleiro, jogador, color):
     print(f"Configurações dos navios de {jogador} foram salvas!")
     #time.sleep(2)
     os.system('cls' if os.name == 'nt' else 'clear')
-
 
 def main():
     init()
